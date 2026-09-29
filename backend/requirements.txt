@@ -1,0 +1,14 @@
+Django>=5.2,<6
+djangorestframework>=3.16,<4
+django-cors-headers>=4.7,<5
+psycopg[binary]>=3.2,<4
+pgvector>=0.3,<1
+gunicorn>=23,<24
+uvicorn[standard]>=0.35,<1
+whitenoise>=6.11,<7
+httpx>=0.28,<1
+pypdf>=5,<6
+python-docx>=1.1,<2
+reportlab>=4,<5
+Pillow>=11,<12
+PyMuPDF>=1.25,<2

@@ -1,0 +1,9 @@
+{
+  "name": "campusclaw-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"dev": "vite --host 0.0.0.0", "build": "vue-tsc --noEmit && vite build"},
+  "dependencies": {"vue": "^3.5.18", "lucide-vue-next": "^0.468.0"},
+  "devDependencies": {"typescript": "^5.9.2", "vite": "^6.3.5", "vue-tsc": "^2.2.12", "@vitejs/plugin-vue": "^5.2.4"}
+}
