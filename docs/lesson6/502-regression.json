@@ -1,0 +1,33 @@
+{
+  "frontend_container_before": "30274555c162941d08df79e8d82f6bee0874ca97b2b714a9c12767b41cc06e86",
+  "backend_ip_before": "172.18.0.6",
+  "dns_cache_seconds": 5,
+  "backend_ip_after": "172.18.0.8",
+  "frontend_container_after": "30274555c162941d08df79e8d82f6bee0874ca97b2b714a9c12767b41cc06e86",
+  "proxy_health_status": 200,
+  "proxy_health_body": {
+    "status": "ok"
+  },
+  "unauthenticated_api_status": 401,
+  "passed": true,
+  "accounts_after_recreation": [
+    {
+      "account": "teacher",
+      "login_status": 200,
+      "course_roles": [
+        "teacher"
+      ],
+      "skill_count": 66,
+      "codex_skill_count": 43
+    },
+    {
+      "account": "student",
+      "login_status": 200,
+      "course_roles": [
+        "student"
+      ],
+      "skill_count": 66,
+      "codex_skill_count": 43
+    }
+  ]
+}

@@ -1,0 +1,393 @@
+{
+  "repo": "openai/skills",
+  "commit": "49f948faa9258a0c61caceaf225e179651397431",
+  "skills": [
+    {
+      "slug": "aspnet-core",
+      "name": "ASP.NET Core 开发 · Codex",
+      "category": "开发",
+      "description": "搭建、审查与优化 ASP.NET Core 应用。",
+      "requirements": "构建和运行需要 .NET SDK；当前执行镜像没有预装 .NET。",
+      "source_path": "skills/.curated/aspnet-core",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "chatgpt-apps",
+      "name": "ChatGPT 应用开发 · Codex",
+      "category": "开发",
+      "description": "按官方规范构建 MCP 与 ChatGPT 应用界面。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/chatgpt-apps",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "cli-creator",
+      "name": "命令行工具构建 · Codex",
+      "category": "开发",
+      "description": "把 API、SDK 或脚本封装成可组合的 CLI。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/cli-creator",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "cloudflare-deploy",
+      "name": "Cloudflare 部署 · Codex",
+      "category": "部署",
+      "description": "使用 Cloudflare Workers 与 Pages 部署应用。",
+      "requirements": "需要 Cloudflare 账户、CLI、项目与授权。",
+      "source_path": "skills/.curated/cloudflare-deploy",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "define-goal",
+      "name": "目标定义 · Codex",
+      "category": "学习",
+      "description": "定义清晰、可验证的工作目标。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/define-goal",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "figma-code-connect-components",
+      "name": "Figma 组件代码映射 · Codex",
+      "category": "设计",
+      "description": "将设计组件关联到实现代码。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-code-connect-components",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma-create-design-system-rules",
+      "name": "Figma 设计系统规范 · Codex",
+      "category": "设计",
+      "description": "提炼可复用的设计与实现约束。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-create-design-system-rules",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma-create-new-file",
+      "name": "Figma 文件创建 · Codex",
+      "category": "设计",
+      "description": "创建结构清楚的设计文件。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-create-new-file",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma-generate-design",
+      "name": "Figma 设计生成 · Codex",
+      "category": "设计",
+      "description": "根据任务描述组织设计稿。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-generate-design",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma-generate-library",
+      "name": "Figma 组件库生成 · Codex",
+      "category": "设计",
+      "description": "构建统一的组件与样式资源。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-generate-library",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma-implement-design",
+      "name": "Figma 设计实现 · Codex",
+      "category": "设计",
+      "description": "将设计稿转成应用界面。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-implement-design",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma-use",
+      "name": "Figma 工作流 · Codex",
+      "category": "设计",
+      "description": "在设计任务中选择合适的 Figma 能力。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma-use",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "figma",
+      "name": "Figma 设计协作 · Codex",
+      "category": "设计",
+      "description": "读取设计上下文、变量与组件信息。",
+      "requirements": "需要外部 Figma 账户、文件访问权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/figma",
+      "license": "见上游技能许可文件"
+    },
+    {
+      "slug": "gh-address-comments",
+      "name": "GitHub 评审处理 · Codex",
+      "category": "开发",
+      "description": "整理并处理 Pull Request 的评审意见。",
+      "requirements": "需要目标 Git 仓库、GitHub CLI 与已授权的 GitHub 账户。",
+      "source_path": "skills/.curated/gh-address-comments",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "gh-fix-ci",
+      "name": "GitHub CI 修复 · Codex",
+      "category": "开发",
+      "description": "定位失败的持续集成检查并制定修复。",
+      "requirements": "需要目标 Git 仓库、GitHub CLI 与已授权的 GitHub 账户。",
+      "source_path": "skills/.curated/gh-fix-ci",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "hatch-pet",
+      "name": "像素宠物创作 · Codex",
+      "category": "设计",
+      "description": "设计与制作可动画化的宠物素材。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/hatch-pet",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "jupyter-notebook",
+      "name": "Jupyter 实验笔记 · Codex",
+      "category": "研究",
+      "description": "使用原始模板与脚本创建实验或教学 Notebook。",
+      "requirements": "可直接运行内置 new_notebook.py，templates 已包含；将 --out 指向 outputs/*.ipynb 可下载生成的 Notebook。",
+      "source_path": "skills/.curated/jupyter-notebook",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "linear",
+      "name": "Linear 项目协作 · Codex",
+      "category": "集成",
+      "description": "管理 Linear 任务、项目与团队工作流。",
+      "requirements": "需要 Linear 账户、工作区权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/linear",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "migrate-to-codex",
+      "name": "Codex 工作流迁移 · Codex",
+      "category": "开发",
+      "description": "将现有代理工作流迁移到 Codex。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/migrate-to-codex",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "netlify-deploy",
+      "name": "Netlify 部署 · Codex",
+      "category": "部署",
+      "description": "构建并发布 Netlify 网站。",
+      "requirements": "需要 Netlify CLI、项目与授权。",
+      "source_path": "skills/.curated/netlify-deploy",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "notion-knowledge-capture",
+      "name": "Notion 知识沉淀 · Codex",
+      "category": "写作",
+      "description": "将讨论与决策整理为结构化知识。",
+      "requirements": "需要外部 Notion 账户、工作区权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/notion-knowledge-capture",
+      "license": "MIT"
+    },
+    {
+      "slug": "notion-meeting-intelligence",
+      "name": "Notion 会议准备 · Codex",
+      "category": "写作",
+      "description": "结合上下文整理议程与会议材料。",
+      "requirements": "需要外部 Notion 账户、工作区权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/notion-meeting-intelligence",
+      "license": "MIT"
+    },
+    {
+      "slug": "notion-research-documentation",
+      "name": "Notion 研究文档 · Codex",
+      "category": "研究",
+      "description": "汇总信息并形成有来源的研究报告。",
+      "requirements": "需要外部 Notion 账户、工作区权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/notion-research-documentation",
+      "license": "MIT"
+    },
+    {
+      "slug": "notion-spec-to-implementation",
+      "name": "Notion 需求落地 · Codex",
+      "category": "开发",
+      "description": "把需求文档拆成实施计划与跟踪任务。",
+      "requirements": "需要外部 Notion 账户、工作区权限和对应 MCP/连接器。",
+      "source_path": "skills/.curated/notion-spec-to-implementation",
+      "license": "MIT"
+    },
+    {
+      "slug": "openai-docs",
+      "name": "OpenAI 官方文档 · Codex",
+      "category": "研究",
+      "description": "依据最新官方文档解释 OpenAI 产品与 API。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/openai-docs",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "pdf",
+      "name": "PDF 阅读与制作 · Codex",
+      "category": "写作",
+      "description": "抽取、制作并检查 PDF 的内容与布局。",
+      "requirements": "平台执行镜像提供 pypdf、reportlab、pdfplumber 与 Poppler；可读取、生成和渲染 PDF。外部输入文件需作为脚本资源提供。",
+      "source_path": "skills/.curated/pdf",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "playwright-interactive",
+      "name": "交互式浏览器调试 · Codex",
+      "category": "开发",
+      "description": "使用持久化 JavaScript 环境检查浏览器交互。",
+      "requirements": "上游技能依赖 Codex 持久化 Node/浏览器会话；平台可使用 browser_open 或一次性隔离 Playwright 脚本，但没有原生持久会话。",
+      "source_path": "skills/.curated/playwright-interactive",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "playwright",
+      "name": "Playwright 自动化 · Codex",
+      "category": "开发",
+      "description": "编写真实浏览器自动化与页面验证流程。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/playwright",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "render-deploy",
+      "name": "Render 部署 · Codex",
+      "category": "部署",
+      "description": "分析代码库并配置 Render 应用部署。",
+      "requirements": "需要 Render API/CLI、项目与授权。",
+      "source_path": "skills/.curated/render-deploy",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "screenshot",
+      "name": "系统截图 · Codex",
+      "category": "设计",
+      "description": "按平台方式捕捉系统与应用画面。",
+      "requirements": "上游技能需要操作系统截图权限；平台沙箱不访问宿主屏幕，可用已绑定 browser_open 获取网页截图。",
+      "source_path": "skills/.curated/screenshot",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "security-best-practices",
+      "name": "安全最佳实践 · Codex",
+      "category": "安全",
+      "description": "针对受支持语言进行安全审查与加固。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/security-best-practices",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "security-ownership-map",
+      "name": "安全责任地图 · Codex",
+      "category": "安全",
+      "description": "分析代码历史与敏感模块的维护责任。",
+      "requirements": "需要输入 Git 仓库及完整提交历史；临时脚本目录没有用户本机仓库。",
+      "source_path": "skills/.curated/security-ownership-map",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "security-threat-model",
+      "name": "威胁建模 · Codex",
+      "category": "安全",
+      "description": "识别信任边界、攻击路径与缓解方案。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.curated/security-threat-model",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "sentry",
+      "name": "Sentry 故障分析 · Codex",
+      "category": "开发",
+      "description": "读取 Sentry 事件并分析线上问题。",
+      "requirements": "需要 Sentry API 及授权；隔离脚本不会自动继承密钥。",
+      "source_path": "skills/.curated/sentry",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "speech",
+      "name": "文本语音生成 · Codex",
+      "category": "写作",
+      "description": "使用语音 API 将文本生成朗读音频。",
+      "requirements": "需要语音 API、密钥与联网运行环境；平台不会自动共享模型网关密钥。",
+      "source_path": "skills/.curated/speech",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "transcribe",
+      "name": "音频转录 · Codex",
+      "category": "研究",
+      "description": "将录音转成文本并标注说话人。",
+      "requirements": "需要音频文件、转录 API 及密钥。",
+      "source_path": "skills/.curated/transcribe",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "vercel-deploy",
+      "name": "Vercel 部署 · Codex",
+      "category": "部署",
+      "description": "部署 Web 应用并获取预览地址。",
+      "requirements": "需要 Vercel CLI、项目与授权。",
+      "source_path": "skills/.curated/vercel-deploy",
+      "license": "MIT"
+    },
+    {
+      "slug": "winui-app",
+      "name": "Windows 应用开发 · Codex",
+      "category": "开发",
+      "description": "搭建并检查 WinUI 桌面应用。",
+      "requirements": "需要 Windows 与 WinUI/.NET 开发环境；Linux 隔离环境无法直接运行 WinUI。",
+      "source_path": "skills/.curated/winui-app",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "yeet",
+      "name": "GitHub 提交与 PR · Codex",
+      "category": "开发",
+      "description": "把更改整理为提交、推送与 Pull Request。",
+      "requirements": "需要目标 Git 仓库、GitHub CLI 与已授权的 GitHub 账户。",
+      "source_path": "skills/.curated/yeet",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "imagegen",
+      "name": "图像生成 · Codex",
+      "category": "设计",
+      "description": "通过图像 API 创建、编辑或变换图片。",
+      "requirements": "需要图像 API、密钥与支持的图像执行工具。",
+      "source_path": "skills/.system/imagegen",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "plugin-creator",
+      "name": "插件构建 · Codex",
+      "category": "技能构建",
+      "description": "设计技能、连接器与工具组成的插件。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.system/plugin-creator",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "skill-creator",
+      "name": "技能创建 · Codex",
+      "category": "技能构建",
+      "description": "设计可靠的 SKILL.md、参考资料与脚本。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.system/skill-creator",
+      "license": "Apache-2.0"
+    },
+    {
+      "slug": "skill-installer",
+      "name": "技能安装 · Codex",
+      "category": "技能构建",
+      "description": "从官方库或指定仓库组织技能安装。",
+      "requirements": "上游为 Codex 工作流；原生 CLI、持久会话、专用连接器与用户目录不会自动出现在隔离环境中。",
+      "source_path": "skills/.system/skill-installer",
+      "license": "Apache-2.0"
+    }
+  ]
+}

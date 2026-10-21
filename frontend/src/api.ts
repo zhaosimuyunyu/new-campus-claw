@@ -15,6 +15,7 @@ export type AgentArtifact = {id:number; name:string; mime_type:string; download_
 
 async function checkResponse(res: Response) {
   if (!res.ok) {
+    if (res.status >= 500) throw new Error('服务暂时不可用，请稍后重试')
     const body = await res.json().catch(() => ({}))
     throw new Error(body.error || body.detail || `请求失败 (${res.status})`)
   }

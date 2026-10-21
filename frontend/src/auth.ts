@@ -24,7 +24,13 @@ async function refreshAccess(): Promise<string> {
   if (!refresh) throw new Error('请先登录')
   refreshing = (async () => {
     const res = await fetch('/api/auth/refresh/', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({refresh})})
-    if (!res.ok) { clearTokens(); throw new Error('登录已过期，请重新登录') }
+    if (!res.ok) {
+      if (res.status === 400 || res.status === 401) {
+        clearTokens()
+        throw new Error('登录已过期，请重新登录')
+      }
+      throw new Error('服务暂时不可用，请稍后重试')
+    }
     const tokens = await res.json() as TokenPair
     saveTokens(tokens)
     return tokens.access

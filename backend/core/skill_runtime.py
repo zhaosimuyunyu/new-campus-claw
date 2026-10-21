@@ -19,7 +19,7 @@ def skill_list(user):
 
 
 def skill_summary(skill):
-    return {k: v for k, v in skill.items() if k not in {"instructions", "resources"}} | {"resource_names": list(skill["resources"])}
+    return {k: v for k, v in skill.items() if k not in {"instructions", "resources", "binary_resources"}} | {"resource_names": [*skill["resources"], *skill.get("binary_resources", {})]}
 
 
 def parse_upload(upload):
@@ -135,9 +135,13 @@ def configure_registry(registry, selected, servers):
         skill = allowed_skills.get(args["skill_id"])
         if not skill:
             raise ValueError("技能未绑定到本课程助手")
-        return {"skill_id": skill["id"], "name": skill["name"], "instructions": skill["instructions"], "resources": list(skill["resources"])}
+        return {"skill_id": skill["id"], "name": skill["name"], "instructions": skill["instructions"], "resources": [*skill["resources"], *skill.get("binary_resources", {})], "requirements": skill.get("requirements", ""), "runtime_note": skill.get("runtime_note", "")}
     async def read_resource(args, context):
         skill = allowed_skills.get(args["skill_id"])
+        if skill and args["path"] in skill.get("binary_resources", {}):
+            import mimetypes
+            return {"path": args["path"], "mime_type": mimetypes.guess_type(args["path"])[0],
+                    "binary_asset": True, "note": "原始二进制资源会随脚本提供给隔离环境；无需将图片字节塞入模型文本。"}
         if not skill or args["path"] not in skill["resources"]:
             raise ValueError("参考文件不存在或技能未绑定")
         return {"path": args["path"], "content": skill["resources"][args["path"]]}
@@ -153,7 +157,7 @@ def configure_registry(registry, selected, servers):
         async with httpx.AsyncClient(timeout=45, trust_env=False) as client:
             response = await client.post(os.getenv("SANDBOX_URL", "http://sandbox-runner:8200") + "/execute",
                 headers={"Authorization": "Bearer " + os.getenv("SANDBOX_TOKEN", "")},
-                json={"files": skill["resources"], "entrypoint": path, "args": args.get("args", [])})
+                json={"files": {"SKILL.md": skill["instructions"], **skill["resources"]}, "binary_files": skill.get("binary_resources", {}), "entrypoint": path, "args": args.get("args", [])})
             if response.status_code >= 400:
                 raise ValueError("隔离执行失败：" + response.text[:200])
             result = await sync_to_async(save_execution_files)(response.json(), context)

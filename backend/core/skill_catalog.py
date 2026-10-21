@@ -62,3 +62,30 @@ for _skill in BUILTIN_SKILLS:
     if _skill["id"] == "data-analysis":
         _skill["instructions"] += "\n需要计算时，调用 run_skill_script 执行 scripts/summarize_numbers.py，args 为数字字符串列表。例如 ['1','2','3']。"
         _skill["resources"]["scripts/summarize_numbers.py"] = "import sys,json,statistics\nvalues=[float(x) for x in sys.argv[1:]]\nif not values: raise ValueError('请提供至少一个数字')\nprint(json.dumps({'count':len(values),'sum':sum(values),'mean':statistics.mean(values),'median':statistics.median(values)},ensure_ascii=False))\n"
+
+
+# Official OpenAI Codex catalogue, namespaced to keep existing skill bindings stable.
+_codex_root = _vendor / "codex"
+if (_codex_root / "sources.json").exists():
+    import base64 as _base64
+    _catalogue = _json.loads((_codex_root / "sources.json").read_text(encoding="utf-8"))
+    for _item in _catalogue["skills"]:
+        _folder = _codex_root / _item["slug"]
+        _text_files, _binary_files = {}, {}
+        for _path in sorted(_folder.rglob("*")):
+            if not _path.is_file() or _path.name == "SKILL.md":
+                continue
+            _relative = _path.relative_to(_folder).as_posix()
+            _raw = _path.read_bytes()
+            try:
+                _text_files[_relative] = _raw.decode("utf-8-sig")
+            except UnicodeError:
+                _binary_files[_relative] = _base64.b64encode(_raw).decode("ascii")
+        BUILTIN_SKILLS.append({"id": "codex-" + _item["slug"], "name": _item["name"],
+            "category": _item["category"], "icon": "⌘", "description": _item["description"],
+            "instructions": (_folder / "SKILL.md").read_text(encoding="utf-8-sig"),
+            "resources": _text_files, "binary_resources": _binary_files, "tool_refs": [],
+            "source": "OpenAI Codex · openai/skills", "source_url": f"https://github.com/openai/skills/blob/{_catalogue['commit']}/{_item['source_path']}/SKILL.md",
+            "version": _catalogue["commit"][:8], "builtin": True, "license": _item["license"],
+            "requirements": _item["requirements"],
+            "runtime_note": "本平台使用 read_skill_resource 读取原始资源，run_skill_script 在技能根目录执行 scripts/ 下的脚本。上游的 $CODEX_HOME、终端或工具调用写法应映射到这些平台工具；不得假设拥有 Codex 原生工具。生成文件请保存到 outputs/。"})

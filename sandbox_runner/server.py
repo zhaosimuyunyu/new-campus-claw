@@ -18,6 +18,8 @@ BOOTSTRAP = r'''
 import sys,json,pathlib,subprocess,base64
 d=json.loads(sys.stdin.readline())
 root=pathlib.Path('/tmp/workspace');root.mkdir()
+for name,body in d.get('binary_files',{}).items():
+    target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(base64.b64decode(body,validate=True))
 for name,body in d['files'].items():
     target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(body)
 status=subprocess.call(d['command'],cwd=root)
@@ -27,7 +29,7 @@ if folder.exists():
     for path in sorted(folder.rglob('*')):
         if len(outputs)>=8:break
         if not path.is_file() or not path.resolve().is_relative_to(root):continue
-        if path.suffix.lower() not in {'.png','.jpg','.jpeg','.pdf','.docx','.csv','.txt','.json','.html','.md'}:continue
+        if path.suffix.lower() not in {'.png','.jpg','.jpeg','.pdf','.docx','.csv','.txt','.json','.html','.md','.ipynb'}:continue
         if path.stat().st_size+total>900000:continue
         raw=path.read_bytes();total+=len(raw)
         outputs.append({'name':path.name,'base64':base64.b64encode(raw).decode()})
@@ -38,6 +40,7 @@ sys.exit(status)
 
 class Execution(BaseModel):
     files: dict[str, str]
+    binary_files: dict[str, str] = Field(default_factory=dict)
     entrypoint: str
     args: list[str] = Field(default_factory=list)
     browser_url: str | None = None
@@ -81,7 +84,7 @@ def execute(data: Execution, authorization: str = Header(default='')):
     started = time.monotonic()
     try:
         files = dict(data.files)
-        if len(files)>45 or sum(len(v.encode()) for v in files.values())>2*1024*1024 or len(data.args)>20 or any(len(a)>4000 for a in data.args):
+        if len(files) + len(data.binary_files)>512 or sum(len(v.encode()) for v in files.values()) + sum(len(v) for v in data.binary_files.values())>8*1024*1024 or len(data.args)>20 or any(len(a)>4000 for a in data.args):
             raise HTTPException(400, '执行输入超出限制')
         if data.browser_url:
             files = {'browser.py': BROWSER_SCRIPT}
@@ -89,7 +92,9 @@ def execute(data: Execution, authorization: str = Header(default='')):
             network_disabled = False
         else:
             entry, args, network_disabled = data.entrypoint, data.args, True
-        for name in files:
+        if set(files) & set(data.binary_files):
+            raise HTTPException(400, '文本与二进制资源路径冲突')
+        for name in [*files, *data.binary_files]:
             path = PurePosixPath(name)
             if path.is_absolute() or '..' in path.parts or '\\' in name or ':' in name:
                 raise HTTPException(400, '不安全文件路径')
@@ -109,7 +114,7 @@ def execute(data: Execution, authorization: str = Header(default='')):
             labels={'campusclaw':'sandbox'},environment={'HOME':'/tmp','PYTHONDONTWRITEBYTECODE':'1'})
         attached=client.api.attach_socket(container.id,params={'stdin':1,'stream':1})
         container.start()
-        attached._sock.sendall((json.dumps({'files':files,'command':interpreters[suffix]+[entry]+args})+'\n').encode())
+        attached._sock.sendall((json.dumps({'files':files,'binary_files':{} if data.browser_url else data.binary_files,'command':interpreters[suffix]+[entry]+args})+'\n').encode())
         try:
             result=container.wait(timeout=35)
         except Exception:

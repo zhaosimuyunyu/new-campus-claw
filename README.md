@@ -75,8 +75,15 @@ Agent 的普通回复按 Markdown 展示。成功生成的 `html` 围栏代码�
 
 ## 第六课：AI 能力平台
 
-课程页进入「能力中心」：5 个 AI 应用、可编辑提示词模板、23 个内置技能（含 Anthropic 与 Superpowers 固定版本技能）、SKILL.md/ZIP 上传、平台公共 MCP 工具、个人外部服务管理和逐轮请求追踪。
+课程页进入「能力中心」：5 个 AI 应用、可编辑提示词模板、66 个内置技能（含 OpenAI Codex、Anthropic 与 Superpowers 固定版本技能）、SKILL.md/ZIP 上传、平台公共 MCP 工具、个人外部服务管理和逐轮请求追踪。
 
 首次先运行 `docker compose --profile build build sandbox-image`，再运行 `docker compose up --build -d`。平台工具包含公式提示、单位换算、学习清单、Python、Shell/Node 和真实 Chromium 浏览器。学生也可在自己的课程助手中绑定平台工具；教师/管理员管理个人 MCP 服务。脚本生成文件写入 `outputs/` 后自动保存为附件。完整操作、协议说明、五道验收题和真实验证记录见 [第六课验收说明](docs/lesson6/验收说明.md)。
 
 外部 MCP 主机需加入 `.env` 的 `MCP_ALLOWED_HOSTS`，令牌只通过 `MCP_` 开头的环境变量提供。`SANDBOX_TOKEN` 用于内部执行代理认证；仅执行代理挂载 Docker socket，后端、MCP 服务和每次执行的容器均不挂载。执行代理不能对公网开放。演示默认令牌仅用于本机；团队或公网部署需要替换。现有数据库和资料卷不会因更新而删除。
+
+
+### 登录 502 修复与 Codex 技能库
+
+后端重建可能改变容器地址。Nginx 现在通过 Docker DNS 每 5 秒刷新上游，前端启动前等待后端健康检查；API 的流式响应关闭缓冲。认证刷新遇到暂时 5xx 或网络故障会保留刷新凭据，仅在 400/401 确认失效时清除。
+
+技能广场可按「OpenAI Codex」筛选 43 项官方技能，公共库共 66 项。原版 SKILL.md、脚本、模板、图片与许可保存在 `backend/core/vendor_skills/codex/`，版本固定为 `49f948faa9258a0c61caceaf225e179651397431`。文本资源按需读取，二进制资产仅传给隔离执行器；`.ipynb` 产物可以下载。详细复验结果见 [502 与 Codex 验证记录](docs/lesson6/502与Codex验证.md)。

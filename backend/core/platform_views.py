@@ -54,7 +54,10 @@ def skill_detail(request, skill_id):
         return JsonResponse({"ok": True})
     if request.method != "GET":
         return HttpResponse(status=405)
-    return JsonResponse(skill)
+    # Keep asset bytes out of catalogue and detail responses.
+    detail = {k: v for k, v in skill.items() if k != "binary_resources"}
+    detail["binary_resource_names"] = list(skill.get("binary_resources", {}))
+    return JsonResponse(detail)
 
 
 @agent_auth_required

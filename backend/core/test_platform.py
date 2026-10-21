@@ -185,3 +185,38 @@ class PlatformTests(TransactionTestCase):
         run=AgentRun.objects.get(thread=self.thread)
         self.assertEqual(run.status,'completed')
         self.assertLessEqual(run.events.filter(event_type='tool_result',payload__status='ok').count(),5)
+
+
+    def test_codex_catalog_is_pinned_and_does_not_send_full_assets(self):
+        from .skill_catalog import BUILTIN_SKILLS
+        codex=[s for s in BUILTIN_SKILLS if s['id'].startswith('codex-')]
+        self.assertEqual(len(codex),43)
+        self.assertEqual(len({s['id'] for s in BUILTIN_SKILLS}),len(BUILTIN_SKILLS))
+        for skill in codex:
+            self.assertIn('/49f948faa9258a0c61caceaf225e179651397431/',skill['source_url'])
+            self.assertIn('name:',skill['instructions'])
+            self.assertTrue(skill['license'])
+            self.assertTrue(skill['requirements'])
+        notebook=next(s for s in codex if s['id']=='codex-jupyter-notebook')
+        self.assertIn('scripts/new_notebook.py',notebook['resources'])
+        self.assertTrue(any(p.endswith('.ipynb') for p in notebook['resources']))
+        catalog=self.client.get('/api/agent/catalog/').json()['skills']
+        for skill in catalog:
+            self.assertNotIn('instructions',skill)
+            self.assertNotIn('binary_resources',skill)
+            self.assertNotIn('resources',skill)
+        detail=self.client.get('/api/agent/skills/codex-jupyter-notebook/').json()
+        self.assertNotIn('binary_resources',detail)
+        self.assertIn('scripts/new_notebook.py',detail['resources'])
+
+    def test_codex_bindings_remain_private_and_resources_are_loaded_on_demand(self):
+        response=self.client.put(f'/api/courses/{self.course.id}/assistant/',{'skill_ids':['codex-jupyter-notebook']},format='json')
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(self.sc.get(f'/api/courses/{self.course.id}/assistant/').json()['skill_ids'],[])
+        with patch.dict(os.environ,{'MODEL_PROVIDER':'mock'}):
+            self.stream('创建 Notebook')
+        request=AgentRun.objects.get(thread=self.thread).events.get(event_type='llm_request').payload
+        system=request['payload']['messages'][0]['content']
+        self.assertIn('codex-jupyter-notebook',system)
+        self.assertNotIn('Create clean, reproducible Jupyter notebooks',system)
+        self.assertNotIn('new_notebook.py',system)
