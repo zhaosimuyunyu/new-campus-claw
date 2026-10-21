@@ -3,7 +3,26 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": {"dev": "vite --host 0.0.0.0", "build": "vue-tsc --noEmit && vite build"},
-  "dependencies": {"vue": "^3.5.18", "lucide-vue-next": "^0.468.0"},
-  "devDependencies": {"typescript": "^5.9.2", "vite": "^6.3.5", "vue-tsc": "^2.2.12", "@vitejs/plugin-vue": "^5.2.4"}
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.16",
+    "highlight.js": "^11.12.0",
+    "lucide-vue-next": "^0.468.0",
+    "marked": "^18.0.14",
+    "vue": "^3.5.18"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.5.1",
+    "jsdom": "^30.1.2",
+    "typescript": "^5.9.2",
+    "vite": "^6.3.5",
+    "vitest": "^5.0.4",
+    "vue-tsc": "^2.2.12"
+  }
 }

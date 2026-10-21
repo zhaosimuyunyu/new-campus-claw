@@ -1,10 +1,12 @@
 from django.urls import path
 from . import views
 from . import agent_views
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path("csrf/", views.csrf), path("auth/code/", views.send_code),
     path("auth/register/", views.register), path("auth/login/", views.sign_in),
+    path("auth/refresh/", TokenRefreshView.as_view()),
     path("auth/logout/", views.sign_out), path("auth/reset/", views.reset_password),
     path("me/", views.me), path("teacher-invite/redeem/", views.redeem_invite),
     path("courses/", views.courses), path("courses/join/", views.join_course),
@@ -21,6 +23,7 @@ urlpatterns = [
     path("courses/<int:course_id>/knowledge/search/", agent_views.knowledge_search),
     path("courses/<int:course_id>/knowledge/reindex/", agent_views.reindex_course),
     path("materials/<int:material_id>/reindex/", agent_views.reindex_material),
+    path("materials/<int:material_id>/preview/", agent_views.material_preview),
     path("agent/threads/", agent_views.threads),
     path("agent/threads/<int:thread_id>/messages/", agent_views.thread_messages),
     path("agent/threads/<int:thread_id>/messages/stream/", agent_views.agent_stream),
@@ -29,6 +32,7 @@ urlpatterns = [
     path("agent/runs/<int:run_id>/cancel/", agent_views.cancel_run),
     path("agent/artifacts/<int:artifact_id>/download/", agent_views.artifact_download),
     path("agent/artifacts/<int:artifact_id>/preview/", agent_views.artifact_preview),
+    path("agent/artifacts/<int:artifact_id>/source/", agent_views.artifact_source),
     path("agent/tools/", agent_views.tools),
     path("agent/tools/<str:tool_name>/execute/", agent_views.execute_tool),
 ]

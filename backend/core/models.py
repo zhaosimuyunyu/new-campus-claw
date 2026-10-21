@@ -150,9 +150,9 @@ class KnowledgeChunk(models.Model):
 
 class ChunkEmbedding(models.Model):
     chunk = models.OneToOneField(KnowledgeChunk, on_delete=models.CASCADE, related_name="embedding_record")
-    embedding = VectorField(dimensions=1536, null=True, blank=True)
+    embedding = VectorField(dimensions=2048, null=True, blank=True)
     model = models.CharField(max_length=160, blank=True)
-    dimensions = models.PositiveIntegerField(default=1536)
+    dimensions = models.PositiveIntegerField(default=2048)
     created_at = models.DateTimeField(auto_now_add=True)
 
 

@@ -3,7 +3,7 @@ import secrets
 from datetime import timedelta
 from pathlib import Path
 from django.conf import settings
-from django.contrib.auth import authenticate, login, logout, password_validation
+from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail
 from django.core.validators import validate_email
@@ -12,13 +12,15 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
-from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ValidationError
 from asgiref.sync import async_to_sync
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from .models import Assignment, Course, EmailCode, Material, Membership, StoredFile, Submission, SubmissionVersion, TeacherInvite, User, token_code
 from .agent_runtime import index_material
 
@@ -75,6 +77,11 @@ def store_file(course, user, upload, kind):
                                      original_name=Path(upload.name).name[:255], size=upload.size, kind=kind)
 
 
+def token_pair(user):
+    refresh = RefreshToken.for_user(user)
+    return {"access": str(refresh.access_token), "refresh": str(refresh)}
+
+
 @ensure_csrf_cookie
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -85,7 +92,6 @@ def csrf(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([CodeThrottle])
-@csrf_protect
 def send_code(request):
     email = str(request.data.get("email", "")).strip().lower()
     purpose = request.data.get("purpose")
@@ -125,7 +131,6 @@ def consume_code(email, purpose, code):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-@csrf_protect
 def register(request):
     email = str(request.data.get("email", "")).strip().lower()
     name = str(request.data.get("display_name", "")).strip()
@@ -140,30 +145,32 @@ def register(request):
         if not consume_code(email, "register", str(request.data.get("code", ""))):
             return fail("验证码无效或已过期")
         user = User.objects.create_user(email=email, password=password, display_name=name)
-    login(request, user)
-    return Response({"id": user.id, "email": user.email, "display_name": name}, status=201)
+    return Response({"id": user.id, "email": user.email, "display_name": name, **token_pair(user)}, status=201)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-@csrf_protect
 def sign_in(request):
     user = authenticate(request, email=str(request.data.get("email", "")).strip().lower(), password=request.data.get("password"))
     if not user:
         return fail("邮箱或密码错误", 400)
-    login(request, user)
-    return Response({"ok": True})
+    return Response(token_pair(user))
 
 
 @api_view(["POST"])
 def sign_out(request):
-    logout(request)
+    try:
+        refresh = RefreshToken(str(request.data.get("refresh", "")))
+        if str(refresh.get("user_id")) != str(request.user.pk):
+            return fail("令牌不属于当前用户", 403)
+        refresh.blacklist()
+    except TokenError:
+        return fail("刷新令牌无效", 400)
     return Response({"ok": True})
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-@csrf_protect
 def reset_password(request):
     email = str(request.data.get("email", "")).strip().lower()
     password = str(request.data.get("password", ""))

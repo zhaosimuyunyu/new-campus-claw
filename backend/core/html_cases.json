@@ -1,0 +1,13 @@
+[
+  {"name":"plain markdown", "input":"# 说明\n普通 **回答**", "sources":[]},
+  {"name":"inline tags", "input":"使用 <div> 或 <span> 标签。", "sources":[]},
+  {"name":"fenced fragment", "input":"说明\n```html\n<div>你好</div>\n```\n结尾", "sources":["<div>你好</div>"]},
+  {"name":"raw document", "input":"前文\n<!DOCTYPE html>\n<html lang=\"zh\"><head><title>页面</title></head><body>内容</body></html>\n后文", "sources":["<!DOCTYPE html>\n<html lang=\"zh\"><head><title>页面</title></head><body>内容</body></html>"]},
+  {"name":"multiple", "input":"```HTML\r\n<b>一</b>\r\n```\n中间\n<html><body>二</body></html>", "sources":["<b>一</b>","<html><body>二</body></html>"]},
+  {"name":"non html fence", "input":"```text\n<html>示例</html>\n```", "sources":[]},
+  {"name":"incomplete fence", "input":"```html\n<html>未结束</html>", "sources":[]},
+  {"name":"incomplete document", "input":"<!doctype html><html><body>未结束", "sources":[]},
+  {"name":"skip script closing string", "input":"<html><script>const text = '</html>';</script><!-- </html> --><body>完成</body></html>", "sources":["<html><script>const text = '</html>';</script><!-- </html> --><body>完成</body></html>"]},
+  {"name":"long fence", "input":"````html\n<pre>```</pre>\n````", "sources":["<pre>```</pre>"]},
+  {"name":"tilde fence", "input":"~~~html\n<h1>页面</h1>\n~~~", "sources":["<h1>页面</h1>"]}
+]

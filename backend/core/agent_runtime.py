@@ -13,6 +13,7 @@ from pathlib import Path
 
 import httpx
 import fitz
+from jsonschema import Draft202012Validator
 from docx import Document
 from pypdf import PdfReader
 from reportlab.lib.pagesizes import A4
@@ -101,13 +102,17 @@ def extract_text(file_path, mime_type=""):
         return Path(file_path).read_text(encoding="utf-8", errors="replace"), suffix[1:]
     if suffix == ".pdf":
         reader = PdfReader(file_path)
-        return "\n\n".join(page.extract_text() or "" for page in reader.pages), "pdf"
+        return _valid_unicode("\n\n".join(page.extract_text() or "" for page in reader.pages)), "pdf"
     if suffix == ".docx":
         doc = Document(file_path)
-        return "\n".join(p.text for p in doc.paragraphs), "docx"
+        return _valid_unicode("\n".join(p.text for p in doc.paragraphs)), "docx"
     if mime_type.startswith("image/"):
         return "", "image"
     raise ValueError("此文件格式暂不支持文本索引")
+
+
+def _valid_unicode(value):
+    return value.encode("utf-8", errors="replace").decode("utf-8")
 
 
 def _openai_headers(key):
@@ -115,7 +120,7 @@ def _openai_headers(key):
 
 
 async def embed_texts(texts):
-    base = os.getenv("EMBEDDING_API_BASE", "").rstrip("/")
+    base = (os.getenv("EMBEDDING_BASE_URL") or os.getenv("EMBEDDING_API_BASE", "")).rstrip("/")
     key = os.getenv("EMBEDDING_API_KEY") or os.getenv("MODEL_API_KEY", "")
     model = os.getenv("EMBEDDING_MODEL", "")
     if not base or not model or not key:
@@ -124,7 +129,7 @@ async def embed_texts(texts):
         response = await client.post(base + "/embeddings", headers=_openai_headers(key), json={"model": model, "input": texts})
         response.raise_for_status()
     vectors = [row["embedding"] for row in response.json().get("data", [])]
-    expected = int(os.getenv("EMBEDDING_DIMENSIONS", "1536"))
+    expected = int(os.getenv("EMBEDDING_DIM") or os.getenv("EMBEDDING_DIMENSIONS") or "2048")
     if len(vectors) != len(texts) or any(len(v) != expected for v in vectors):
         raise RuntimeErrorWithStatus(f"嵌入模型返回维度不符，要求 {expected} 维")
     return vectors, model
@@ -213,9 +218,11 @@ def _vector_search_sync(course_id, vector, limit):
 
 def serialize_chunk(chunk, mode):
     material = chunk.entry.material
-    return {"chunk_id": chunk.id, "material_id": material.id, "title": material.title,
+    return {"chunk_id": chunk.id, "material_id": material.id, "attachment_id": material.attachment_id, "title": material.title,
             "chunk_index": chunk.chunk_index, "start_offset": chunk.start_offset, "end_offset": chunk.end_offset,
-            "excerpt": chunk.chunk_text, "mode": mode, "download_url": f"/api/files/{material.attachment_id}/download/"}
+            "excerpt": chunk.chunk_text, "mode": mode, "file_name": material.attachment.original_name,
+            "download_url": f"/api/files/{material.attachment_id}/download/",
+            "preview_url": f"/api/materials/{material.id}/preview/"}
 
 
 async def search(course_id, query, mode="hybrid", limit=10):
@@ -329,15 +336,16 @@ class ToolRegistry:
             raise ValueError("工具参数必须是 JSON 对象")
         if spec.required_permission not in context.permissions:
             raise PermissionError("当前运行没有该工具权限")
-        if spec.input_schema.get("type") == "object":
-            required = spec.input_schema.get("required", [])
-            missing = [key for key in required if key not in arguments]
-            if missing:
-                raise ValueError("缺少工具参数: " + ", ".join(missing))
+        errors = list(Draft202012Validator(spec.input_schema).iter_errors(arguments))
+        if errors:
+            raise ValueError("工具参数无效: " + errors[0].message)
         if function is None:
             raise RuntimeError("工具尚未绑定执行器")
         result = function(arguments, context)
-        return await result if inspect.isawaitable(result) else result
+        result = await result if inspect.isawaitable(result) else result
+        if not Draft202012Validator(spec.output_schema).is_valid(result):
+            raise ValueError("工具返回值不符合声明格式")
+        return result
 
 
 def builtin_tool_registry():
@@ -368,11 +376,19 @@ def builtin_tool_registry():
         return execute
 
     registry.register(ToolSpec("search_course_knowledge", "1.0",
-        {"type": "object", "required": ["query"]}, {"type": "array"}, "course.read", True, False), search_course)
-    registry.register(ToolSpec("list_course_materials", "1.0", {"type": "object"}, {"type": "array"}, "course.read", True, False), list_materials)
-    registry.register(ToolSpec("create_pdf", "1.0", {"type": "object", "required": ["content"]}, {"type": "object"}, "artifact.create", False, True), artifact_tool("pdf"))
-    registry.register(ToolSpec("create_docx", "1.0", {"type": "object", "required": ["content"]}, {"type": "object"}, "artifact.create", False, True), artifact_tool("docx"))
+        {"type": "object", "properties": {"query": {"type": "string"}, "mode": {"type": "string", "enum": ["keyword", "vector", "hybrid"]}}, "required": ["query"], "additionalProperties": False},
+        {"type": "array"}, "course.read", True, False), search_course)
+    registry.register(ToolSpec("list_course_materials", "1.0", {"type": "object", "properties": {}, "additionalProperties": False}, {"type": "array"}, "course.read", True, False), list_materials)
+    artifact_schema = {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}}, "required": ["content"], "additionalProperties": False}
+    registry.register(ToolSpec("create_pdf", "1.0", artifact_schema, {"type": "object"}, "artifact.create", False, True), artifact_tool("pdf"))
+    registry.register(ToolSpec("create_docx", "1.0", artifact_schema, {"type": "object"}, "artifact.create", False, True), artifact_tool("docx"))
     return registry
+
+
+def model_tools(registry, permissions):
+    return [{"type": "function", "function": {"name": spec.name,
+             "description": f"CampusClaw 内置工具，版本 {spec.version}", "parameters": spec.input_schema}}
+            for spec in registry.describe() if spec.required_permission in permissions]
 
 
 def serialize_material(material):
@@ -401,7 +417,9 @@ def create_artifact(owner, thread, title, body, kind):
         document = fitz.open()
         page = document.new_page(width=595, height=842)
         fontfile = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
-        font_kwargs = {"fontfile": fontfile} if os.path.exists(fontfile) else {}
+        font_kwargs = {"fontname": "CampusClawCJK"} if os.path.exists(fontfile) else {}
+        if font_kwargs:
+            page.insert_font(fontname="CampusClawCJK", fontfile=fontfile)
         page.insert_text((50, 65), title, fontsize=20, color=(0.09, 0.25, 0.22), **font_kwargs)
         box = fitz.Rect(50, 95, 545, 790)
         page.insert_textbox(box, body, fontsize=11, lineheight=1.5, color=(0.12, 0.16, 0.16), **font_kwargs)
@@ -417,7 +435,7 @@ def create_artifact(owner, thread, title, body, kind):
     return artifact
 
 
-async def model_stream(messages, attachments=()):
+async def model_stream(messages, attachments=(), tools=()):
     provider = os.getenv("MODEL_PROVIDER", "mock").lower()
     model = os.getenv("MODEL_NAME", "")
     if provider == "mock" or not model:
@@ -460,6 +478,8 @@ async def model_stream(messages, attachments=()):
             raise RuntimeErrorWithStatus("未配置 OpenAI 兼容模型网关")
         endpoint = base + "/chat/completions"
         payload = {"model": model, "stream": True, "messages": messages}
+        if tools:
+            payload["tools"] = tools
         headers = _openai_headers(key)
         parser = "openai"
     async with httpx.AsyncClient(timeout=httpx.Timeout(180, connect=20)) as client:
@@ -467,23 +487,51 @@ async def model_stream(messages, attachments=()):
             if response.status_code >= 400:
                 detail = (await response.aread()).decode("utf-8", "replace")
                 raise RuntimeErrorWithStatus(f"模型网关请求失败: HTTP {response.status_code} {detail[:300]}")
+            tool_calls = {}
+            stream_finished = False
             async for line in response.aiter_lines():
                 if not line.startswith("data:"):
                     continue
                 raw = line[5:].strip()
                 if raw == "[DONE]":
+                    stream_finished = True
                     break
                 try:
                     data = json.loads(raw)
                 except json.JSONDecodeError:
                     continue
                 if parser == "anthropic":
+                    if data.get("type") == "error":
+                        raise RuntimeErrorWithStatus("模型流式生成失败")
+                    if data.get("delta", {}).get("stop_reason") == "max_tokens":
+                        raise RuntimeErrorWithStatus("回答达到长度上限，尚未完成，请要求模型缩短页面后重试")
+                    if data.get("type") == "message_stop":
+                        stream_finished = True
                     if data.get("type") == "content_block_delta":
                         yield data.get("delta", {}).get("text", ""), model
                 else:
-                    delta = (data.get("choices") or [{}])[0].get("delta", {}).get("content", "")
+                    if data.get("error"):
+                        raise RuntimeErrorWithStatus("模型流式生成失败")
+                    choice = (data.get("choices") or [{}])[0]
+                    finish_reason = choice.get("finish_reason")
+                    if finish_reason in {"length", "content_filter"}:
+                        raise RuntimeErrorWithStatus("回答被截断，尚未完成，请缩短请求后重试")
+                    if finish_reason:
+                        stream_finished = True
+                    delta_data = choice.get("delta", {})
+                    for call in delta_data.get("tool_calls") or []:
+                        item = tool_calls.setdefault(call["index"], {"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
+                        item["id"] += call.get("id") or ""
+                        function = call.get("function") or {}
+                        item["function"]["name"] += function.get("name") or ""
+                        item["function"]["arguments"] += function.get("arguments") or ""
+                    delta = delta_data.get("content", "")
                     if isinstance(delta, str) and delta:
                         yield delta, model
+            if not stream_finished:
+                raise RuntimeErrorWithStatus("模型连接提前结束，回答尚未完成，请重试")
+            if tool_calls:
+                yield {"tool_calls": [tool_calls[index] for index in sorted(tool_calls)]}, model
 
 
 def attachment_prompt(attachment):
@@ -496,7 +544,7 @@ def attachment_prompt(attachment):
             pages = []
             extracted = []
             for page_number, page in enumerate(document):
-                text = page.get_text().strip()
+                text = _valid_unicode(page.get_text()).strip()
                 if text:
                     extracted.append(text)
                 elif page_number < 5:

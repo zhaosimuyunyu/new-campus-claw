@@ -1,16 +1,22 @@
 from datetime import timedelta
 import asyncio
+import json
+import os
+import httpx
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import AsyncMock, patch
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import (AgentArtifact, AgentMessage, AgentThread, Assignment, Course, EmailCode,
                     Membership, TeacherInvite, User)
-from .agent_runtime import ToolContext, ToolRegistry, ToolSpec
+from .agent_runtime import ToolContext, ToolRegistry, ToolSpec, model_stream, RuntimeErrorWithStatus
+from .html_artifacts import extract_html, html_filename
 
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
@@ -27,9 +33,9 @@ class WorkflowTests(TestCase):
         self.tc = APIClient()
         self.sc = APIClient()
         self.oc = APIClient()
-        self.tc.force_login(self.teacher)
-        self.sc.force_login(self.student)
-        self.oc.force_login(self.other)
+        self.tc.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(self.teacher).access_token}")
+        self.sc.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(self.student).access_token}")
+        self.oc.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(self.other).access_token}")
 
     def upload(self, name="answer.docx"):
         return SimpleUploadedFile(name, b"course work", content_type="application/octet-stream")
@@ -55,12 +61,24 @@ class WorkflowTests(TestCase):
         expired_code = mail.outbox[-1].body.split("验证码：")[1][:6]
         self.assertEqual(client.post("/api/auth/register/", {**data, "email": "expired@example.com", "code": expired_code}).status_code, 400)
 
-    def test_anonymous_auth_writes_require_csrf(self):
+    def test_bearer_auth_does_not_use_session_or_csrf(self):
         client = APIClient(enforce_csrf_checks=True)
-        self.assertEqual(client.post("/api/auth/code/", {"email": "new@example.com", "purpose": "register"}).status_code, 403)
-        client.get("/api/csrf/")
-        token = client.cookies["csrftoken"].value
-        self.assertEqual(client.post("/api/auth/code/", {"email": "new@example.com", "purpose": "register"}, HTTP_X_CSRFTOKEN=token).status_code, 200)
+        self.assertEqual(client.post("/api/auth/code/", {"email": "new@example.com", "purpose": "register"}).status_code, 200)
+        client.force_login(self.teacher)
+        self.assertEqual(client.get("/api/me/").status_code, 401)
+        self.assertEqual(client.get("/api/agent/threads/").status_code, 401)
+        pair = client.post("/api/auth/login/", {"email": self.teacher.email, "password": "secure-pass-123"}).data
+        self.assertIn("access", pair)
+        self.assertIn("refresh", pair)
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {pair['access']}")
+        self.assertEqual(client.get("/api/me/").status_code, 200)
+        self.assertEqual(client.get("/api/agent/threads/").status_code, 200)
+        rotated = client.post("/api/auth/refresh/", {"refresh": pair["refresh"]}).data
+        self.assertIn("access", rotated)
+        self.assertNotEqual(pair["refresh"], rotated["refresh"])
+        self.assertNotEqual(client.post("/api/auth/refresh/", {"refresh": pair["refresh"]}).status_code, 200)
+        self.assertEqual(client.post("/api/auth/logout/", {"refresh": rotated["refresh"]}).status_code, 200)
+        self.assertNotEqual(client.post("/api/auth/refresh/", {"refresh": rotated["refresh"]}).status_code, 200)
 
     def test_invite_create_join_and_reset_code(self):
         raw = "secret-teacher-invite"
@@ -104,7 +122,7 @@ class WorkflowTests(TestCase):
         same_course_student = User.objects.create_user("classmate@example.com", "secure-pass-123", display_name="Classmate")
         Membership.objects.create(course_id=course_id, user=same_course_student, role="student")
         classmate_client = APIClient()
-        classmate_client.force_login(same_course_student)
+        classmate_client.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(same_course_student).access_token}")
         self.assertEqual(self.download_status(classmate_client, second.data['attachment']['id']), 403)
         self.assertEqual(self.oc.get(f"/api/assignments/{aid}/submissions/").status_code, 403)
         self.assertEqual(self.tc.get(f"/api/assignments/{aid}/submissions/").status_code, 200)
@@ -142,9 +160,9 @@ class AgentRuntimeTests(TransactionTestCase):
         Membership.objects.create(course=self.course, user=self.owner, role="teacher")
         self.thread = AgentThread.objects.create(owner=self.owner, course=self.course)
         self.client = APIClient()
-        self.client.force_login(self.owner)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(self.owner).access_token}")
         self.other_client = APIClient()
-        self.other_client.force_login(self.other)
+        self.other_client.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(self.other).access_token}")
 
     def stream_body(self, response):
         async def collect(stream):
@@ -197,3 +215,95 @@ class AgentRuntimeTests(TransactionTestCase):
             asyncio.run(registry.execute("echo", {}, context))
         with self.assertRaises(PermissionError):
             asyncio.run(registry.execute("echo", {"value": "ok"}, ToolContext(self.owner, self.thread)))
+
+    def test_html_stream_persists_sources_and_access_control(self):
+        source = '<!doctype html><html><title>计算/器</title><body><script>let x=1;</script>你好</body></html>'
+        answer = f'前文\n{source}\n后文\n```html\n<b>第二个</b>\n```'
+
+        async def model(*args):
+            for index in range(0, len(answer), 3):
+                yield answer[index:index + 3], 'fixture'
+
+        with patch('core.agent_views.model_stream', model):
+            response = self.client.post(f'/api/agent/threads/{self.thread.id}/messages/stream/', {'content':'生成页面'}, format='json')
+            body = self.stream_body(response)
+        self.assertEqual(body.count('event: artifact\n'), 2)
+        self.assertLess(body.index('event: artifact\n'), body.index('event: message_end\n'))
+        assistant = self.thread.messages.get(role='assistant')
+        self.assertEqual(assistant.content, answer)
+        self.assertIn('前文', assistant.metadata['display_content'])
+        self.assertIn('后文', assistant.metadata['display_content'])
+        self.assertNotIn('<html', assistant.metadata['display_content'])
+        files = assistant.metadata['artifacts']
+        self.assertEqual(files[0]['name'], '计算-器.html')
+        self.assertEqual(self.client.get(files[0]['source_url']).content.decode(), source)
+        self.assertIn('text/plain', self.client.get(files[0]['source_url'])['Content-Type'])
+        preview = self.client.get(files[0]['preview_url'])
+        self.assertIn('sandbox allow-scripts', preview['Content-Security-Policy'])
+        self.assertNotIn('allow-same-origin', preview['Content-Security-Policy'])
+        download = self.client.get(files[0]['download_url'])
+        self.assertEqual(b''.join(download.streaming_content).decode(), source)
+        download.close()
+        history = self.client.get(f'/api/agent/threads/{self.thread.id}/messages/').json()
+        self.assertEqual(history[-1]['metadata']['artifacts'], files)
+        for key in ('source_url', 'preview_url', 'download_url'):
+            self.assertEqual(APIClient().get(files[0][key]).status_code, 401)
+            self.assertEqual(self.other_client.get(files[0][key]).status_code, 404)
+        Membership.objects.filter(user=self.owner, course=self.course).delete()
+        for key in ('source_url', 'preview_url', 'download_url'):
+            self.assertEqual(self.client.get(files[0][key]).status_code, 404)
+
+    def test_failed_or_cancelled_stream_does_not_create_html(self):
+        for failure in (RuntimeError('fixture failure'), asyncio.CancelledError()):
+            with self.subTest(failure=type(failure).__name__):
+                async def model(*args):
+                    yield '<html><body>完整页面也不能保存</body></html>', 'fixture'
+                    raise failure
+                with patch('core.agent_views.model_stream', model):
+                    response = self.client.post(f'/api/agent/threads/{self.thread.id}/messages/stream/', {'content':'生成页面'}, format='json')
+                    try:
+                        self.stream_body(response)
+                    except asyncio.CancelledError:
+                        pass
+                self.assertFalse(self.thread.artifacts.exists())
+                self.assertTrue(self.thread.messages.filter(role='assistant').last().metadata['partial'])
+
+    def test_pdf_and_docx_artifacts_still_download(self):
+        for kind in ('pdf', 'docx'):
+            response = self.client.post(f'/api/agent/threads/{self.thread.id}/artifacts/',
+                {'kind':kind, 'title':'Regression', 'content':'Document body'}, format='json')
+            self.assertEqual(response.status_code, 201)
+            artifact = response.json()
+            self.assertIsNone(artifact['source_url'])
+            self.assertEqual(self.client.get(artifact['preview_url']).status_code, 200)
+            downloaded = self.client.get(artifact['download_url'])
+            content = b''.join(downloaded.streaming_content)
+            downloaded.close()
+            self.assertTrue(content.startswith(b'%PDF' if kind == 'pdf' else b'PK'))
+
+
+class HtmlExtractionTests(SimpleTestCase):
+    def test_shared_extraction_cases(self):
+        for case in json.loads(Path(__file__).with_name('html_cases.json').read_text(encoding='utf-8')):
+            with self.subTest(case=case['name']):
+                display, sources = extract_html(case['input'])
+                self.assertEqual(sources, case['sources'])
+                if not sources:
+                    self.assertEqual(display, case['input'])
+
+    def test_safe_filename(self):
+        self.assertEqual(html_filename('<title>CON</title>', 10, 2), 'campusclaw-10-2.html')
+        self.assertEqual(html_filename('<title>A &amp; B / C</title>', 10, 1), 'A & B - C.html')
+
+    def test_truncated_gateway_stream_is_not_successful(self):
+        for ending in ('', 'data: {"choices":[{"finish_reason":"length","delta":{}}]}\n\n', 'data: {"error":{"message":"failed"}}\n\n'):
+            with self.subTest(ending=ending):
+                wire = 'data: {"choices":[{"delta":{"content":"<html>partial</html>"}}]}\n\n' + ending
+                async def collect():
+                    transport = httpx.MockTransport(lambda request: httpx.Response(200, text=wire))
+                    client = httpx.AsyncClient(transport=transport)
+                    with patch('core.agent_runtime.httpx.AsyncClient', return_value=client):
+                        return [item async for item in model_stream([{'role':'user', 'content':'page'}])]
+                with patch.dict(os.environ, {'MODEL_PROVIDER':'openai', 'MODEL_NAME':'fixture', 'MODEL_API_BASE':'https://example.test/v1', 'MODEL_API_KEY':'fixture'}):
+                    with self.assertRaises(RuntimeErrorWithStatus):
+                        asyncio.run(collect())
