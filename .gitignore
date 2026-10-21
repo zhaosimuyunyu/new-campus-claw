@@ -7,3 +7,6 @@ backend/staticfiles/
 frontend/node_modules/
 frontend/dist/
 HANDOFF.md
+
+# Office temporary lock files
+~$*

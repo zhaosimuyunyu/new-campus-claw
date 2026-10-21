@@ -1,9 +1,18 @@
 from django.urls import path
 from . import views
-from . import agent_views
+from . import agent_views, platform_views
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
+    path("agent/threads/<int:thread_id>/tool-test/", platform_views.tool_test),
+    path("agent/catalog/", platform_views.catalog),
+    path("agent/skills/upload/", platform_views.skill_upload),
+    path("agent/skills/<str:skill_id>/", platform_views.skill_detail),
+    path("courses/<int:course_id>/assistant/", platform_views.assistant_config),
+    path("agent/platform-tools/", platform_views.platform_tools),
+    path("agent/mcp/", platform_views.servers),
+    path("agent/mcp/<int:server_id>/", platform_views.servers),
+    path("agent/threads/<int:thread_id>/traces/", platform_views.traces),
     path("csrf/", views.csrf), path("auth/code/", views.send_code),
     path("auth/register/", views.register), path("auth/login/", views.sign_in),
     path("auth/refresh/", TokenRefreshView.as_view()),

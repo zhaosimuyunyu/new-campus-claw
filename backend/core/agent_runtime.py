@@ -1,4 +1,5 @@
 import asyncio
+from contextvars import ContextVar
 import base64
 import hashlib
 import html
@@ -435,11 +436,39 @@ def create_artifact(owner, thread, title, body, kind):
     return artifact
 
 
+trace_sink = ContextVar("model_trace_sink", default=None)
+trace_frames = ContextVar("model_trace_frames", default=None)
+
+
+async def trace_record(kind, payload):
+    sink = trace_sink.get()
+    if sink:
+        await sink(kind, payload)
+
+
 async def model_stream(messages, attachments=(), tools=()):
+    frames = []
+    token = trace_frames.set(frames)
+    text_parts, calls = [], []
+    try:
+        async for delta, model in _model_stream_impl(messages, attachments, tools):
+            if isinstance(delta, dict):
+                calls.extend(delta.get("tool_calls", []))
+            else:
+                text_parts.append(delta)
+            yield delta, model
+    finally:
+        await trace_record("llm_response", {"content": "".join(text_parts), "tool_calls": calls, "frames": frames})
+        trace_frames.reset(token)
+
+
+async def _model_stream_impl(messages, attachments=(), tools=()):
     provider = os.getenv("MODEL_PROVIDER", "mock").lower()
     model = os.getenv("MODEL_NAME", "")
     if provider == "mock" or not model:
-        answer = "我已收到你的问题。配置课程模型网关后，我可以继续结合课程资料和附件生成回答。"
+        await trace_record("llm_request", {"provider": "mock", "endpoint": None, "sent": False,
+            "payload": {"model": model or "mock-local", "messages": messages, "tools": tools, "stream": True}})
+        answer = "【演示模式，未调用真实模型】我已收到你的问题。配置课程模型网关后，我可以继续结合课程资料和附件生成回答。"
         for token in re.findall(r".{1,8}", answer, flags=re.S):
             await asyncio.sleep(0.02)
             yield token, model or "mock-local"
@@ -465,10 +494,18 @@ async def model_stream(messages, attachments=(), tools=()):
                     else:
                         blocks.append(part)
                 content = blocks
+            if row["role"] == "tool":
+                anthropic_messages.append({"role": "user", "content": [{"type": "tool_result", "tool_use_id": row["tool_call_id"], "content": content}]})
+                continue
+            if row.get("tool_calls"):
+                content = ([{"type": "text", "text": content}] if content else []) + [
+                    {"type": "tool_use", "id": call["id"], "name": call["function"]["name"], "input": json.loads(call["function"]["arguments"] or "{}")} for call in row["tool_calls"]]
             anthropic_messages.append({"role": row["role"], "content": content})
         payload = {"model": model, "max_tokens": 2048, "stream": True,
                    "messages": anthropic_messages,
                    "system": next((row["content"] for row in messages if row["role"] == "system"), "")}
+        if tools:
+            payload["tools"] = [{"name": t["function"]["name"], "description": t["function"]["description"], "input_schema": t["function"]["parameters"]} for t in tools]
         headers = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
         parser = "anthropic"
     else:
@@ -482,6 +519,7 @@ async def model_stream(messages, attachments=(), tools=()):
             payload["tools"] = tools
         headers = _openai_headers(key)
         parser = "openai"
+    await trace_record("llm_request", {"provider": provider, "endpoint": endpoint, "sent": True, "payload": payload})
     async with httpx.AsyncClient(timeout=httpx.Timeout(180, connect=20)) as client:
         async with client.stream("POST", endpoint, headers=headers, json=payload) as response:
             if response.status_code >= 400:
@@ -500,6 +538,8 @@ async def model_stream(messages, attachments=(), tools=()):
                     data = json.loads(raw)
                 except json.JSONDecodeError:
                     continue
+                if trace_frames.get() is not None:
+                    trace_frames.get().append(data)
                 if parser == "anthropic":
                     if data.get("type") == "error":
                         raise RuntimeErrorWithStatus("模型流式生成失败")
@@ -507,6 +547,11 @@ async def model_stream(messages, attachments=(), tools=()):
                         raise RuntimeErrorWithStatus("回答达到长度上限，尚未完成，请要求模型缩短页面后重试")
                     if data.get("type") == "message_stop":
                         stream_finished = True
+                    if data.get("type") == "content_block_start" and data.get("content_block", {}).get("type") == "tool_use":
+                        block = data["content_block"]
+                        tool_calls[data["index"]] = {"id": block["id"], "type": "function", "function": {"name": block["name"], "arguments": ""}}
+                    if data.get("type") == "content_block_delta" and data.get("delta", {}).get("type") == "input_json_delta":
+                        tool_calls[data["index"]]["function"]["arguments"] += data["delta"].get("partial_json", "")
                     if data.get("type") == "content_block_delta":
                         yield data.get("delta", {}).get("text", ""), model
                 else:

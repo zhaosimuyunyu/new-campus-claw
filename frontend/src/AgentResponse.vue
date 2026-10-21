@@ -8,6 +8,7 @@ const props = defineProps<{message:AgentMessage}>()
 const emit = defineEmits<{open:[file:HtmlFile]}>()
 const presentation = computed(() => messagePresentation(props.message))
 const error = ref('')
+const usedTools = computed(()=>(props.message.metadata.tools||[]) as {name:string;status:string}[])
 async function save(file:HtmlFile) {
   error.value = ''
   try {
@@ -25,6 +26,7 @@ async function otherAction(url:string, name?:string) {
 </script>
 
 <template>
+  <div v-if="usedTools.length" class="used-tools"><span v-for="(tool,index) in usedTools" :key="index">{{tool.status==='ok'?'✓':'!'}} {{tool.name}}<small v-if="tool.status!=='ok'"> · 未成功</small></span></div>
   <div v-if="presentation.display" class="markdown-body" v-html="renderMarkdown(presentation.display)"></div>
   <div v-for="file in presentation.files" :key="file.key" class="html-file-card">
     <button class="html-file-open" @click="emit('open', file)">
@@ -34,9 +36,13 @@ async function otherAction(url:string, name?:string) {
     <button class="secondary" :aria-label="`下载 ${file.name}`" @click="save(file)"><Download :size="15"/> 下载</button>
   </div>
   <div v-for="file in presentation.others" :key="file.id" class="message-artifacts">
-    <button @click="otherAction(file.preview_url)"><Eye :size="14"/> {{ file.name }}</button>
+    <button @click="otherAction(file.mime_type.startsWith('image/')?file.download_url:file.preview_url)"><Eye :size="14"/> {{ file.name }}</button>
     <button @click="otherAction(file.download_url, file.name)"><Download :size="14"/> 下载</button>
   </div>
   <small v-if="message.metadata.partial" class="muted"><Code2 :size="12"/> 回复未完成，HTML 尚未保存为文件</small>
   <p v-if="error" class="preview-error" role="alert">{{ error }}</p>
 </template>
+
+<style scoped>
+.used-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.used-tools span{padding:4px 7px;background:#eef3ea;border-radius:4px;font-size:10px;color:#628157}.used-tools small{color:#a17c58}
+</style>

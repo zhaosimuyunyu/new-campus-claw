@@ -1,0 +1,51 @@
+[
+  {
+    "case": "python",
+    "response": {
+      "exit_code": 0,
+      "stdout": "42\n",
+      "stderr": "",
+      "files": [
+        {
+          "name": "result.json",
+          "base64": "eyJhbnN3ZXIiOiA0Mn0="
+        }
+      ],
+      "duration_ms": 313,
+      "network": "disabled"
+    }
+  },
+  {
+    "case": "javascript",
+    "response": {
+      "exit_code": 0,
+      "stdout": "42\n",
+      "stderr": "",
+      "files": [],
+      "duration_ms": 389,
+      "network": "disabled"
+    }
+  },
+  {
+    "case": "shell",
+    "response": {
+      "exit_code": 0,
+      "stdout": "sandbox-ok",
+      "stderr": "",
+      "files": [],
+      "duration_ms": 271,
+      "network": "disabled"
+    }
+  },
+  {
+    "case": "isolation",
+    "response": {
+      "exit_code": 0,
+      "stdout": "root_writable False\nnetwork_result 101\n",
+      "stderr": "",
+      "files": [],
+      "duration_ms": 264,
+      "network": "disabled"
+    }
+  }
+]

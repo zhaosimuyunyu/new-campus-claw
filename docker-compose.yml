@@ -14,6 +14,22 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27
     ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+  sandbox-image:
+    image: campusclaw-sandbox:local
+    build: ./sandbox_image
+    profiles: ["build"]
+  sandbox-runner:
+    build: ./sandbox_runner
+    environment:
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:-campus-local-sandbox-demo}
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+  campus-tools:
+    build: ./mcp_server
+    environment:
+      SANDBOX_URL: http://sandbox-runner:8200
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:-campus-local-sandbox-demo}
+      MCP_CAMPUS_TOKEN: ${MCP_CAMPUS_TOKEN:-campus-local-mcp-demo}
+    ports: ["127.0.0.1:8100:8100"]
   backend:
     build: ./backend
     environment:
@@ -32,6 +48,10 @@ services:
       ALLOWED_HOSTS: localhost,127.0.0.1,backend
       CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       MEDIA_ROOT: /app/media
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-campus-tools,localhost,127.0.0.1}
+      SANDBOX_URL: http://sandbox-runner:8200
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:-campus-local-sandbox-demo}
+      MCP_CAMPUS_TOKEN: ${MCP_CAMPUS_TOKEN:-campus-local-mcp-demo}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-mock}
       MODEL_API_BASE: ${MODEL_API_BASE:-}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
@@ -48,7 +68,9 @@ services:
     depends_on:
       db: {condition: service_healthy}
       mailpit: {condition: service_started}
-    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn campus.asgi:application --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120"
+      campus-tools: {condition: service_started}
+      sandbox-runner: {condition: service_started}
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py bootstrap_tools && gunicorn campus.asgi:application --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120"
   frontend:
     build: ./frontend
     ports: ["127.0.0.1:5173:80"]

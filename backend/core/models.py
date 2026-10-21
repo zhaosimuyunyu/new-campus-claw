@@ -181,6 +181,45 @@ class AgentThread(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class UserSkill(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=80)
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
+    instructions = models.TextField()
+    resources = models.JSONField(default=dict)
+    tool_refs = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class AssistantConfig(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    app_id = models.CharField(max_length=60, default="general")
+    template = models.TextField(blank=True)
+    skill_ids = models.JSONField(default=list)
+    mcp_refs = models.JSONField(default=list)
+    use_knowledge = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["owner", "course"], name="unique_assistant_config")]
+
+
+class MCPServer(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.SlugField(max_length=60)
+    url = models.URLField()
+    token_env = models.CharField(max_length=100, blank=True)
+    connected = models.BooleanField(default=False)
+    tools = models.JSONField(default=list)
+    is_shared = models.BooleanField(default=False)
+    session_id = models.CharField(max_length=200, blank=True)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["owner", "name"], name="unique_mcp_owner_name")]
+
+
 class AgentMessage(models.Model):
     class Role(models.TextChoices):
         USER = "user", "User"

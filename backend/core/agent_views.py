@@ -17,6 +17,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from .agent_runtime import (RuntimeErrorWithStatus, ToolContext, attachment_prompt, builtin_tool_registry, model_tools,
                             create_artifact, event, index_material, model_stream, require_course_member, search)
 from .models import AgentArtifact, AgentAttachment, AgentMessage, AgentRun, AgentThread, KnowledgeEntry, Material
+from .agent_runtime import trace_sink
 from .html_artifacts import extract_html, save_html_artifact
 
 
@@ -95,7 +96,7 @@ def _finish_answer(user, thread, run, answer, citations, model_name, artifacts):
             for index, source in enumerate(sources, 1):
                 created.append(save_html_artifact(user, thread, source, assistant.id, index))
             html_files = [_artifact_data(item) for item in created]
-            assistant.metadata = {"model": model_name, "artifacts": [*artifacts, *html_files], "display_content": display}
+            assistant.metadata = {"tools": [{"name": e.payload.get("name"), "status": e.payload.get("status")} for e in run.events.filter(event_type="tool_result")], "run_id": run.id, "model": model_name, "artifacts": [*artifacts, *html_files], "display_content": display}
             assistant.save(update_fields=["metadata"])
             locked.status = AgentRun.Status.COMPLETED
             locked.finished_at = timezone.now()
@@ -222,7 +223,9 @@ def agent_stream(request, thread_id):
     content = str(data.get("content") or "").strip()
     if not content:
         return JsonResponse({"error": "消息不能为空"}, status=400)
-    use_materials = bool(data.get("use_course_materials", False))
+    from .skill_runtime import runtime_config, configure_registry
+    config, app, selected_skills, mcp_tools, unavailable_refs = runtime_config(user, thread.course_id)
+    use_materials = bool(data.get("use_course_materials", config.use_knowledge if config else False))
     attachment_ids = [int(value) for value in (data.get("attachments") or []) if str(value).isdigit()]
     attachments = list(AgentAttachment.objects.filter(id__in=attachment_ids, owner=user, course_id=thread.course_id))
     if thread.title == "新对话":
@@ -238,7 +241,14 @@ def agent_stream(request, thread_id):
         artifacts = []
         model_name = run.model
         completed = False
+        round_number = 0
+        async def record_trace(kind, payload):
+            await sync_to_async(event)(run, kind, {"round": round_number, **payload})
+        trace_token = trace_sink.set(record_trace)
         try:
+            await record_trace("context", {"app": app["id"], "template": config.template if config else "",
+                "skills": [{"id": s["id"], "name": s["name"], "description": s["description"]} for s in selected_skills],
+                "knowledge_enabled": use_materials, "mcp_refs": config.mcp_refs if config else [], "unavailable_tools": unavailable_refs})
             await sync_to_async(event)(run, "message_start", {"run_id": run.id})
             yield f"event: message_start\ndata: {json.dumps({'run_id': run.id, 'message_id': user_message.id}, ensure_ascii=False)}\n\n"
             if use_materials and not thread.course_id:
@@ -249,6 +259,7 @@ def agent_stream(request, thread_id):
                 except RuntimeErrorWithStatus:
                     raise
                 if not hits:
+                    await record_trace("retrieval", {"query": content, "top_k": 4, "returned_chunks": [], "llm_called": False})
                     assistant = await sync_to_async(AgentMessage.objects.create)(thread=thread, role="assistant", content=NO_HIT, citations=[])
                     run.status = AgentRun.Status.COMPLETED
                     run.finished_at = timezone.now()
@@ -259,12 +270,22 @@ def agent_stream(request, thread_id):
                     yield f"event: message_end\ndata: {json.dumps({'message_id': assistant.id, 'citations': []}, ensure_ascii=False)}\n\n"
                     return
                 citations = hits
+                await record_trace("retrieval", {"query": content, "top_k": 4, "returned_chunks": hits, "whole_knowledge_base_sent": False})
                 for citation in citations:
                     await sync_to_async(event)(run, "citation", citation)
                     yield f"event: citation\ndata: {json.dumps(citation, ensure_ascii=False)}\n\n"
             history = await sync_to_async(list)(thread.messages.order_by("created_at").values("role", "content"))
             system = "你是 CampusClaw 课程垂域 Agent。回答必须清晰、简洁；如果提供了资料，只能依据资料回答并使用 [1]、[2] 标注引用。你可以调用已声明的工具；需要生成 PDF 或 DOCX 时应调用对应工具，不能声称没有工具。"
             system += "需要交付 HTML 页面时，请输出包含 <html> 和 </html> 的完整文档，推荐使用 html 围栏代码块；CSS 和交互脚本放在文档中，并提供简短 title。系统会自动将 HTML 保存为可预览下载的文件。"
+            system += "\n当前应用：" + app["prompt"]
+            if config and config.template:
+                template = config.template.replace("{{course}}", thread.course.name if thread.course else "").replace("{{question}}", content)
+                system += "\n用户提示词模板：\n" + template
+            if selected_skills:
+                system += "\n已绑定技能（仅摘要）：\n" + "\n".join(f"{s['id']}: {s['name']} — {s['description']}" for s in selected_skills)
+                system += "\n技能脚本在临时 Linux 容器中执行，工作目录包含技能参考文件与 scripts；可使用 Python、Node、Shell。生成文件请保存到 outputs/，会自动保存为可下载附件。Python Playwright 使用 executable_path='/usr/bin/chromium' 并带 --no-sandbox；脚本默认无网络，公网访问请调用已绑定的 browser_open。\n执行适合的技能前必须调用 read_skill 获取完整指令；参考文件用 read_skill_resource 按需读取。不得声称已执行未加载的技能。"
+            if unavailable_refs:
+                system += "\n以下工具当前不可用，请如实告知，不要编造结果：" + ", ".join(unavailable_refs)
             if citations:
                 system += "\n课程资料依据:\n" + "\n".join(f"[{i}] {hit['title']} #{hit['chunk_index']}: {hit['excerpt']}" for i, hit in enumerate(citations, 1))
             messages = [{"role": "system", "content": system}]
@@ -280,8 +301,30 @@ def agent_stream(request, thread_id):
             if thread.course_id:
                 permissions.add("course.read")
             context = ToolContext(user, thread, frozenset(permissions))
+            descriptions = configure_registry(registry, selected_skills, mcp_tools)
+            if selected_skills:
+                permissions.add("skill.read")
+            if mcp_tools:
+                permissions.add("mcp.call")
+            context = ToolContext(user, thread, frozenset(permissions))
             tools = model_tools(registry, permissions)
-            for _ in range(4):
+            for tool in tools:
+                name = tool["function"]["name"]
+                if name in descriptions:
+                    tool["function"]["description"] = descriptions[name]
+                elif name == "read_skill":
+                    tool["function"]["description"] = "执行技能前读取完整 SKILL.md 指令。绑定只提供摘要，使用前必须加载。"
+                elif name == "read_skill_resource":
+                    tool["function"]["description"] = "按需读取已绑定技能的指定参考文件。"
+            # Unbound retrieval must not silently read the course knowledge base.
+            if not use_materials and not any("search_course_knowledge" in sk["tool_refs"] for sk in selected_skills):
+                tools = [t for t in tools if t["function"]["name"] != "search_course_knowledge"]
+            allowed_names = {t["function"]["name"] for t in tools}
+            total_calls = 0
+            for round_number in range(1, 7):
+                if round_number == 6 or total_calls >= 12:
+                    tools = []
+                    messages.append({"role": "system", "content": "已达到工具调用预算。请根据已有证据完成回答，明确未完成部分，不再调用工具。"})
                 pending_calls = []
                 round_text = []
                 async for delta, model in model_stream(messages, attachments, tools):
@@ -302,21 +345,41 @@ def agent_stream(request, thread_id):
                 messages.append({"role": "assistant", "content": "".join(round_text), "tool_calls": pending_calls})
                 for call in pending_calls:
                     name = call.get("function", {}).get("name", "")
-                    if name not in {spec.name for spec in registry.describe()}:
-                        raise RuntimeErrorWithStatus("模型请求了未注册的工具")
+                    parse_error = None
                     try:
                         arguments = json.loads(call.get("function", {}).get("arguments") or "{}")
-                    except json.JSONDecodeError as exc:
-                        raise RuntimeErrorWithStatus("模型工具参数不是有效 JSON") from exc
-                    call_payload = {"name": name, "arguments": arguments}
+                    except json.JSONDecodeError:
+                        arguments = call.get("function", {}).get("arguments")
+                        parse_error = "模型工具参数不是有效 JSON"
+                    call_payload = {"name": name, "arguments": arguments, "round": round_number, "call_id": call.get("id")}
+                    total_calls += 1
                     await sync_to_async(event)(run, "tool_call", call_payload)
                     yield f"event: tool_call\ndata: {json.dumps(call_payload, ensure_ascii=False)}\n\n"
-                    result = await registry.execute(name, arguments, context)
-                    result_payload = {"name": name, "result": result}
+                    import time
+                    started = time.monotonic()
+                    try:
+                        if parse_error:
+                            raise ValueError(parse_error)
+                        if name not in allowed_names or not tools or total_calls > 12:
+                            raise ValueError("工具不在本次候选集或已达到调用上限")
+                        result = await asyncio.wait_for(registry.execute(name, arguments, context), timeout=45)
+                        status = "error" if isinstance(result, dict) and result.get("isError") else "ok"
+                    except Exception as exc:
+                        result = {"isError": True, "error": str(exc)[:500]}
+                        status = "rejected" if isinstance(exc, (ValueError, PermissionError, KeyError)) else "error"
+                    result_payload = {"name": name, "result": result, "round": round_number, "status": status,
+                                      "duration_ms": round((time.monotonic() - started) * 1000)}
                     await sync_to_async(event)(run, "tool_result", result_payload)
                     await sync_to_async(AgentMessage.objects.create)(thread=thread, role="tool", content=json.dumps(result, ensure_ascii=False), metadata={"name": name, "run_id": run.id})
                     yield f"event: tool_result\ndata: {json.dumps(result_payload, ensure_ascii=False)}\n\n"
-                    if name in {"create_pdf", "create_docx"}:
+                    if isinstance(result, dict):
+                        for artifact_id in result.get("_artifact_ids", []):
+                            image = await sync_to_async(lambda aid=artifact_id: AgentArtifact.objects.get(pk=aid, owner=user))()
+                            image_payload = _artifact_data(image)
+                            artifacts.append(image_payload)
+                            await sync_to_async(event)(run, "artifact", image_payload)
+                            yield f"event: artifact\ndata: {json.dumps(image_payload, ensure_ascii=False)}\n\n"
+                    if status == "ok" and name in {"create_pdf", "create_docx"}:
                         artifact = await sync_to_async(lambda: AgentArtifact.objects.get(pk=result["id"]))()
                         payload = _artifact_data(artifact)
                         artifacts.append(payload)
@@ -324,7 +387,7 @@ def agent_stream(request, thread_id):
                         yield f"event: artifact\ndata: {json.dumps(payload, ensure_ascii=False, default=str)}\n\n"
                     messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(result, ensure_ascii=False)})
             else:
-                raise RuntimeErrorWithStatus("模型工具调用次数过多")
+                answer_parts.append("\n本次工具调用已达到上限。以上仅包含已取得的结果，尚未完成的步骤可在下一条消息继续。")
             answer = "".join(answer_parts)
             assistant, html_files = await sync_to_async(_finish_answer)(user, thread, run, answer, citations, model_name, artifacts)
             completed = True
@@ -361,6 +424,7 @@ def agent_stream(request, thread_id):
             # The async generator uses a thread-sensitive Django connection.
             # Close it when a long-lived stream ends so cancelled/test streams
             # do not leave a PostgreSQL session behind.
+            trace_sink.reset(trace_token)
             await sync_to_async(_close_db_connection)()
 
     response = StreamingHttpResponse(stream(), content_type="text/event-stream; charset=utf-8")
@@ -415,6 +479,11 @@ def artifact_preview(request, artifact_id):
     artifact = _accessible_artifact(request, artifact_id)
     if not artifact:
         return JsonResponse({"error": "文件不存在"}, status=404)
+    if not artifact.preview_html and artifact.file.storage.exists(artifact.file.name):
+        response = FileResponse(artifact.file.open("rb"), filename=artifact.name, content_type=artifact.mime_type)
+        response["Content-Security-Policy"] = "sandbox; default-src 'none'"
+        response["Cache-Control"] = "no-store"
+        return response
     response = HttpResponse(artifact.preview_html or "暂无预览", content_type="text/html; charset=utf-8")
     response["Content-Security-Policy"] = "sandbox allow-scripts; object-src 'none'; frame-src 'none'; connect-src 'none'; form-action 'none'"
     response["Cache-Control"] = "no-store"

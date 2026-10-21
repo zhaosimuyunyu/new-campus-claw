@@ -70,4 +70,13 @@ Agent 的普通回复按 Markdown 展示。成功生成的 `html` 围栏代码�
 
 后端通过环境变量连接模型和嵌入网关：`MODEL_PROVIDER`（`mock`、`openai` 或 `anthropic`）、`MODEL_API_BASE`、`MODEL_API_KEY`、`MODEL_NAME`、`EMBEDDING_BASE_URL`、`EMBEDDING_API_KEY`、`EMBEDDING_MODEL` 与 `EMBEDDING_DIM`。课程网关的 Base URL 应以 `/v1` 结尾，程序会分别接上 `/chat/completions` 和 `/embeddings`；向量维度为 2048。旧变量名 `EMBEDDING_API_BASE`、`EMBEDDING_DIMENSIONS` 仍可使用，但新变量优先。默认 `mock` 模式无需外部密钥即可验收流式流程。密钥只放在被 Git 忽略的 `.env`，不要提交到仓库。
 
-受控工具统一经过 `ToolRegistry`：`search_course_knowledge`、`list_course_materials`、`create_pdf`、`create_docx`。工具执行入口为 `/api/agent/tools/{name}/execute/`，课程范围由服务端线程和 membership 决定；本轮不开放任意命令执行或外部写入型 MCP。
+受控工具统一经过 `ToolRegistry`：`search_course_knowledge`、`list_course_materials`、`create_pdf`、`create_docx`。工具执行入口为 `/api/agent/tools/{name}/execute/`，课程范围由服务端线程和 membership 决定；第六课新增 Skill、隔离脚本执行与 MCP；请阅读下方说明。
+
+
+## 第六课：AI 能力平台
+
+课程页进入「能力中心」：5 个 AI 应用、可编辑提示词模板、23 个内置技能（含 Anthropic 与 Superpowers 固定版本技能）、SKILL.md/ZIP 上传、平台公共 MCP 工具、个人外部服务管理和逐轮请求追踪。
+
+首次先运行 `docker compose --profile build build sandbox-image`，再运行 `docker compose up --build -d`。平台工具包含公式提示、单位换算、学习清单、Python、Shell/Node 和真实 Chromium 浏览器。学生也可在自己的课程助手中绑定平台工具；教师/管理员管理个人 MCP 服务。脚本生成文件写入 `outputs/` 后自动保存为附件。完整操作、协议说明、五道验收题和真实验证记录见 [第六课验收说明](docs/lesson6/验收说明.md)。
+
+外部 MCP 主机需加入 `.env` 的 `MCP_ALLOWED_HOSTS`，令牌只通过 `MCP_` 开头的环境变量提供。`SANDBOX_TOKEN` 用于内部执行代理认证；仅执行代理挂载 Docker socket，后端、MCP 服务和每次执行的容器均不挂载。执行代理不能对公网开放。演示默认令牌仅用于本机；团队或公网部署需要替换。现有数据库和资料卷不会因更新而删除。

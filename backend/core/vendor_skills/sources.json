@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "frontend-design",
+    "repo": "anthropics/skills",
+    "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+    "url": "https://github.com/anthropics/skills/blob/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/frontend-design/SKILL.md"
+  },
+  {
+    "slug": "doc-coauthoring",
+    "repo": "anthropics/skills",
+    "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+    "url": "https://github.com/anthropics/skills/blob/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/doc-coauthoring/SKILL.md"
+  },
+  {
+    "slug": "webapp-testing",
+    "repo": "anthropics/skills",
+    "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+    "url": "https://github.com/anthropics/skills/blob/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/webapp-testing/SKILL.md"
+  },
+  {
+    "slug": "systematic-debugging",
+    "repo": "obra/superpowers",
+    "commit": "b739a8af570e10a95898f2bdf6cec97467fa6c12",
+    "url": "https://github.com/obra/superpowers/blob/b739a8af570e10a95898f2bdf6cec97467fa6c12/skills/systematic-debugging/SKILL.md"
+  },
+  {
+    "slug": "test-driven-development",
+    "repo": "obra/superpowers",
+    "commit": "b739a8af570e10a95898f2bdf6cec97467fa6c12",
+    "url": "https://github.com/obra/superpowers/blob/b739a8af570e10a95898f2bdf6cec97467fa6c12/skills/test-driven-development/SKILL.md"
+  },
+  {
+    "slug": "brainstorming",
+    "repo": "obra/superpowers",
+    "commit": "b739a8af570e10a95898f2bdf6cec97467fa6c12",
+    "url": "https://github.com/obra/superpowers/blob/b739a8af570e10a95898f2bdf6cec97467fa6c12/skills/brainstorming/SKILL.md"
+  },
+  {
+    "slug": "writing-plans",
+    "repo": "obra/superpowers",
+    "commit": "b739a8af570e10a95898f2bdf6cec97467fa6c12",
+    "url": "https://github.com/obra/superpowers/blob/b739a8af570e10a95898f2bdf6cec97467fa6c12/skills/writing-plans/SKILL.md"
+  }
+]

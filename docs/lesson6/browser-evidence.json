@@ -1,0 +1,5262 @@
+{
+  "trace": {
+    "id": 35,
+    "label": "05 真实浏览器",
+    "thread_id": 26,
+    "status": "completed",
+    "error": "",
+    "events": [
+      {
+        "event_type": "context",
+        "payload": {
+          "app": "general",
+          "round": 0,
+          "skills": [
+            {
+              "id": "data-analysis",
+              "name": "数据分析",
+              "description": "从数据质量、统计方法到结论边界。"
+            }
+          ],
+          "mcp_refs": [
+            "formula_hint@campus-tools",
+            "python_execute@campus-tools",
+            "shell_execute@campus-tools",
+            "browser_open@campus-tools"
+          ],
+          "template": "你是 {{course}} 的实验助教。请用中文回答，先给结论，再列证据。",
+          "knowledge_enabled": false,
+          "unavailable_tools": []
+        },
+        "sequence": 1
+      },
+      {
+        "event_type": "message_start",
+        "payload": {
+          "run_id": 35
+        },
+        "sequence": 2
+      },
+      {
+        "event_type": "llm_request",
+        "payload": {
+          "sent": true,
+          "round": 1,
+          "payload": {
+            "model": "course-chat",
+            "tools": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "list_course_materials",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  },
+                  "description": "CampusClaw 内置工具，版本 1.0"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "create_pdf",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "content"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "CampusClaw 内置工具，版本 1.0"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "create_docx",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "content"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "CampusClaw 内置工具，版本 1.0"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "read_skill",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "skill_id"
+                    ],
+                    "properties": {
+                      "skill_id": {
+                        "enum": [
+                          "data-analysis"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "执行技能前读取完整 SKILL.md 指令。绑定只提供摘要，使用前必须加载。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "read_skill_resource",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "skill_id",
+                      "path"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "skill_id": {
+                        "enum": [
+                          "data-analysis"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "按需读取已绑定技能的指定参考文件。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "run_skill_script",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "skill_id",
+                      "path"
+                    ],
+                    "properties": {
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 20
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "skill_id": {
+                        "enum": [
+                          "data-analysis"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "在临时隔离容器中执行已绑定技能 scripts/ 下的 Python、JavaScript 或 Shell 脚本。参数用字符串数组传入。默认无网络，不可访问宿主文件，35 秒上限。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_formula_hint",
+                  "parameters": {
+                    "type": "object",
+                    "title": "formula_hintArguments",
+                    "required": [
+                      "topic"
+                    ],
+                    "properties": {
+                      "topic": {
+                        "type": "string",
+                        "title": "Topic"
+                      }
+                    }
+                  },
+                  "description": "formula_hint@campus-tools: 为代数、导数、积分或概率提供公式与解题提示，不代做整道作业。topic 是知识点或题目。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_python_execute",
+                  "parameters": {
+                    "type": "object",
+                    "title": "python_executeArguments",
+                    "required": [
+                      "code"
+                    ],
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "title": "Code"
+                      }
+                    }
+                  },
+                  "description": "python_execute@campus-tools: 在隔离容器执行 Python 代码，适用于计算、统计或脚本验证。支持 pandas、matplotlib；无网络、无宿主文件访问，35 秒上限。返回 stdout、stderr 与退出码。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_shell_execute",
+                  "parameters": {
+                    "type": "object",
+                    "title": "shell_executeArguments",
+                    "required": [
+                      "command"
+                    ],
+                    "properties": {
+                      "files": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Files",
+                        "default": null
+                      },
+                      "command": {
+                        "type": "string",
+                        "title": "Command"
+                      }
+                    }
+                  },
+                  "description": "shell_execute@campus-tools: 在临时 Linux 工作目录执行 Shell 命令，可传入文本文件。支持 python、node 和常用系统命令；无网络，无宿主挂载，35 秒上限。仅 stdout/stderr 为执行证据。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_browser_open",
+                  "parameters": {
+                    "type": "object",
+                    "title": "browser_openArguments",
+                    "required": [
+                      "url"
+                    ],
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "title": "Url"
+                      }
+                    }
+                  },
+                  "description": "browser_open@campus-tools: 通过真实 Chromium 浏览器打开公网 HTTP(S) 网页，返回标题、正文、链接及页面截图。不支持登录、内部网络或下载。"
+                }
+              }
+            ],
+            "stream": true,
+            "messages": [
+              {
+                "role": "system",
+                "content": "你是 CampusClaw 课程垂域 Agent。回答必须清晰、简洁；如果提供了资料，只能依据资料回答并使用 [1]、[2] 标注引用。你可以调用已声明的工具；需要生成 PDF 或 DOCX 时应调用对应工具，不能声称没有工具。需要交付 HTML 页面时，请输出包含 <html> 和 </html> 的完整文档，推荐使用 html 围栏代码块；CSS 和交互脚本放在文档中，并提供简短 title。系统会自动将 HTML 保存为可预览下载的文件。\n当前应用：你是耐心的课程学习伙伴。先理解问题，再给出清楚、可验证的回答。\n用户提示词模板：\n你是 第六课 · AI 能力实验室 的实验助教。请用中文回答，先给结论，再列证据。\n已绑定技能（仅摘要）：\ndata-analysis: 数据分析 — 从数据质量、统计方法到结论边界。\n技能脚本在临时 Linux 容器中执行，工作目录包含技能参考文件与 scripts；可使用 Python、Node、Shell。生成文件请保存到 outputs/，会自动保存为可下载附件。Python Playwright 使用 executable_path='/usr/bin/chromium' 并带 --no-sandbox；脚本默认无网络，公网访问请调用已绑定的 browser_open。\n执行适合的技能前必须调用 read_skill 获取完整指令；参考文件用 read_skill_resource 按需读取。不得声称已执行未加载的技能。"
+              },
+              {
+                "role": "user",
+                "content": "请调用 browser_open 打开 https://example.com ，告诉我页面真实标题和正文概要，并提供截图。"
+              }
+            ]
+          },
+          "endpoint": "https://ai-gateway.devops.hello1023.com/v1/chat/completions",
+          "provider": "openai"
+        },
+        "sequence": 3
+      },
+      {
+        "event_type": "llm_response",
+        "payload": {
+          "round": 1,
+          "frames": [
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "我"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "现在"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "需要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "处理"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "用户"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "请求"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "用户"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "让"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "调用"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "browser"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "_open"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "打开"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "https"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "://"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "example"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": ".com"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "获取"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "页面"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "真实"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "标题"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "、"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "正文"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "概要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "和"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "截图"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "首先"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "看"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "一下"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "可用"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "工具"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "里面"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "有"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "m"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "cp"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "_"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "1"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "_b"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "rowser"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "_open"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "参数"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "需要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "url"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "所以"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "应该"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "调用"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "这个"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "工具"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "参数"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "就是"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "给定"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "url"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "那"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "按照"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "格式"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "来"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "写"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "函数"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "调用"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "确保"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "参数"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "正确"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "id": "call_9rvn4wvq2qu22gpwqytmiz7c",
+                        "type": "function",
+                        "index": 0,
+                        "function": {
+                          "name": "mcp_1_browser_open",
+                          "arguments": ""
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": "{\"url\": \""
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": "https"
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": "://"
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": "example"
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": ".com"
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": "\""
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                      {
+                        "index": 0,
+                        "function": {
+                          "arguments": "}"
+                        }
+                      }
+                    ]
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": ""
+                  },
+                  "index": 0,
+                  "finish_reason": "tool_calls"
+                }
+              ],
+              "created": 1792548787,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487855290451d664a5d5fd238884dd8fb7ca7e60c87cbd",
+              "model": "course-chat",
+              "usage": {
+                "total_tokens": 1892,
+                "prompt_tokens": 1775,
+                "completion_tokens": 117,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 76
+                }
+              },
+              "object": "chat.completion.chunk",
+              "choices": [],
+              "created": 1792548787,
+              "service_tier": "default"
+            }
+          ],
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_9rvn4wvq2qu22gpwqytmiz7c",
+              "type": "function",
+              "function": {
+                "name": "mcp_1_browser_open",
+                "arguments": "{\"url\": \"https://example.com\"}"
+              }
+            }
+          ]
+        },
+        "sequence": 4
+      },
+      {
+        "event_type": "tool_call",
+        "payload": {
+          "name": "mcp_1_browser_open",
+          "round": 1,
+          "call_id": "call_9rvn4wvq2qu22gpwqytmiz7c",
+          "arguments": {
+            "url": "https://example.com"
+          }
+        },
+        "sequence": 5
+      },
+      {
+        "event_type": "tool_result",
+        "payload": {
+          "name": "mcp_1_browser_open",
+          "round": 1,
+          "result": {
+            "content": [
+              {
+                "text": "{\"title\": \"Example Domain\", \"url\": \"https://example.com/\", \"text\": \"This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.\\n\\nهذا النطاق مُخصص للاستخدام في أمثلة التوثيق دون الحاجة إلى إذن. هذه ليست خدمة، يُرجى تجنب الاعتماد عليها لأغراض الاختبار والمراقبة.\\n\\n该域名仅用于文档示例，无需获得许可。这并非一项服务，请勿将其用于测试和监控目的。\\n\\nL’usage de ce domaine est réservé à des exemples de documentation, sans autorisation préalable. Il ne s’agit pas d’un service ; son utilisation à des fins de test ou de surveillance est à éviter.\\n\\nДанный домен предназначен для использования в примерах документации без необходимости получения предварительного разрешения. Это не сервис; не рекомендуется его использование для тестирования и мониторинга.\\n\\nEste dominio está destinado al uso en ejemplos de documentación sin necesidad de permiso. Esto no es un servicio; evitar utilizarlo para realizar pruebas o monitoreos.\\n\\nLearn more\", \"links\": [{\"text\": \"Learn more\", \"url\": \"https://iana.org/help/example-domains\"}], \"screenshot_url\": \"/api/agent/artifacts/19/download/\"}",
+                "type": "text"
+              }
+            ],
+            "isError": false,
+            "_artifact_ids": [
+              19
+            ]
+          },
+          "status": "ok",
+          "duration_ms": 4932
+        },
+        "sequence": 6
+      },
+      {
+        "event_type": "artifact",
+        "payload": {
+          "id": 19,
+          "name": "browser-screenshot.png",
+          "mime_type": "image/png",
+          "created_at": "2026-10-21T02:13:13.956191+00:00",
+          "source_url": null,
+          "preview_url": "/api/agent/artifacts/19/preview/",
+          "download_url": "/api/agent/artifacts/19/download/"
+        },
+        "sequence": 7
+      },
+      {
+        "event_type": "llm_request",
+        "payload": {
+          "sent": true,
+          "round": 2,
+          "payload": {
+            "model": "course-chat",
+            "tools": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "list_course_materials",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  },
+                  "description": "CampusClaw 内置工具，版本 1.0"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "create_pdf",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "content"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "CampusClaw 内置工具，版本 1.0"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "create_docx",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "content"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "CampusClaw 内置工具，版本 1.0"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "read_skill",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "skill_id"
+                    ],
+                    "properties": {
+                      "skill_id": {
+                        "enum": [
+                          "data-analysis"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "执行技能前读取完整 SKILL.md 指令。绑定只提供摘要，使用前必须加载。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "read_skill_resource",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "skill_id",
+                      "path"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "skill_id": {
+                        "enum": [
+                          "data-analysis"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "按需读取已绑定技能的指定参考文件。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "run_skill_script",
+                  "parameters": {
+                    "type": "object",
+                    "required": [
+                      "skill_id",
+                      "path"
+                    ],
+                    "properties": {
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 20
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "skill_id": {
+                        "enum": [
+                          "data-analysis"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "description": "在临时隔离容器中执行已绑定技能 scripts/ 下的 Python、JavaScript 或 Shell 脚本。参数用字符串数组传入。默认无网络，不可访问宿主文件，35 秒上限。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_formula_hint",
+                  "parameters": {
+                    "type": "object",
+                    "title": "formula_hintArguments",
+                    "required": [
+                      "topic"
+                    ],
+                    "properties": {
+                      "topic": {
+                        "type": "string",
+                        "title": "Topic"
+                      }
+                    }
+                  },
+                  "description": "formula_hint@campus-tools: 为代数、导数、积分或概率提供公式与解题提示，不代做整道作业。topic 是知识点或题目。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_python_execute",
+                  "parameters": {
+                    "type": "object",
+                    "title": "python_executeArguments",
+                    "required": [
+                      "code"
+                    ],
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "title": "Code"
+                      }
+                    }
+                  },
+                  "description": "python_execute@campus-tools: 在隔离容器执行 Python 代码，适用于计算、统计或脚本验证。支持 pandas、matplotlib；无网络、无宿主文件访问，35 秒上限。返回 stdout、stderr 与退出码。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_shell_execute",
+                  "parameters": {
+                    "type": "object",
+                    "title": "shell_executeArguments",
+                    "required": [
+                      "command"
+                    ],
+                    "properties": {
+                      "files": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Files",
+                        "default": null
+                      },
+                      "command": {
+                        "type": "string",
+                        "title": "Command"
+                      }
+                    }
+                  },
+                  "description": "shell_execute@campus-tools: 在临时 Linux 工作目录执行 Shell 命令，可传入文本文件。支持 python、node 和常用系统命令；无网络，无宿主挂载，35 秒上限。仅 stdout/stderr 为执行证据。"
+                }
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "mcp_1_browser_open",
+                  "parameters": {
+                    "type": "object",
+                    "title": "browser_openArguments",
+                    "required": [
+                      "url"
+                    ],
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "title": "Url"
+                      }
+                    }
+                  },
+                  "description": "browser_open@campus-tools: 通过真实 Chromium 浏览器打开公网 HTTP(S) 网页，返回标题、正文、链接及页面截图。不支持登录、内部网络或下载。"
+                }
+              }
+            ],
+            "stream": true,
+            "messages": [
+              {
+                "role": "system",
+                "content": "你是 CampusClaw 课程垂域 Agent。回答必须清晰、简洁；如果提供了资料，只能依据资料回答并使用 [1]、[2] 标注引用。你可以调用已声明的工具；需要生成 PDF 或 DOCX 时应调用对应工具，不能声称没有工具。需要交付 HTML 页面时，请输出包含 <html> 和 </html> 的完整文档，推荐使用 html 围栏代码块；CSS 和交互脚本放在文档中，并提供简短 title。系统会自动将 HTML 保存为可预览下载的文件。\n当前应用：你是耐心的课程学习伙伴。先理解问题，再给出清楚、可验证的回答。\n用户提示词模板：\n你是 第六课 · AI 能力实验室 的实验助教。请用中文回答，先给结论，再列证据。\n已绑定技能（仅摘要）：\ndata-analysis: 数据分析 — 从数据质量、统计方法到结论边界。\n技能脚本在临时 Linux 容器中执行，工作目录包含技能参考文件与 scripts；可使用 Python、Node、Shell。生成文件请保存到 outputs/，会自动保存为可下载附件。Python Playwright 使用 executable_path='/usr/bin/chromium' 并带 --no-sandbox；脚本默认无网络，公网访问请调用已绑定的 browser_open。\n执行适合的技能前必须调用 read_skill 获取完整指令；参考文件用 read_skill_resource 按需读取。不得声称已执行未加载的技能。"
+              },
+              {
+                "role": "user",
+                "content": "请调用 browser_open 打开 https://example.com ，告诉我页面真实标题和正文概要，并提供截图。"
+              },
+              {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                  {
+                    "id": "call_9rvn4wvq2qu22gpwqytmiz7c",
+                    "type": "function",
+                    "function": {
+                      "name": "mcp_1_browser_open",
+                      "arguments": "{\"url\": \"https://example.com\"}"
+                    }
+                  }
+                ]
+              },
+              {
+                "role": "tool",
+                "content": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"title\\\": \\\"Example Domain\\\", \\\"url\\\": \\\"https://example.com/\\\", \\\"text\\\": \\\"This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.\\\\n\\\\nهذا النطاق مُخصص للاستخدام في أمثلة التوثيق دون الحاجة إلى إذن. هذه ليست خدمة، يُرجى تجنب الاعتماد عليها لأغراض الاختبار والمراقبة.\\\\n\\\\n该域名仅用于文档示例，无需获得许可。这并非一项服务，请勿将其用于测试和监控目的。\\\\n\\\\nL’usage de ce domaine est réservé à des exemples de documentation, sans autorisation préalable. Il ne s’agit pas d’un service ; son utilisation à des fins de test ou de surveillance est à éviter.\\\\n\\\\nДанный домен предназначен для использования в примерах документации без необходимости получения предварительного разрешения. Это не сервис; не рекомендуется его использование для тестирования и мониторинга.\\\\n\\\\nEste dominio está destinado al uso en ejemplos de documentación sin necesidad de permiso. Esto no es un servicio; evitar utilizarlo para realizar pruebas o monitoreos.\\\\n\\\\nLearn more\\\", \\\"links\\\": [{\\\"text\\\": \\\"Learn more\\\", \\\"url\\\": \\\"https://iana.org/help/example-domains\\\"}], \\\"screenshot_url\\\": \\\"/api/agent/artifacts/19/download/\\\"}\"}], \"isError\": false, \"_artifact_ids\": [19]}",
+                "tool_call_id": "call_9rvn4wvq2qu22gpwqytmiz7c"
+              }
+            ]
+          },
+          "endpoint": "https://ai-gateway.devops.hello1023.com/v1/chat/completions",
+          "provider": "openai"
+        },
+        "sequence": 8
+      },
+      {
+        "event_type": "llm_response",
+        "payload": {
+          "round": 2,
+          "frames": [
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "用户"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "要求"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "打开"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "https"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "://"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "example"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": ".com"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "获取"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "标题"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "、"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "正文"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "概要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "和"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "截图"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "根据"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "工具"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "返回"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "结果"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "标题"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "是"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "\""
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "Example"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": " Domain"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "\""
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "正文"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "概要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "包含"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "多"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "语言"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "说明"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "主要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "意思"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "是"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "这个"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "域名"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "用于"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "文档"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "示例"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "无需"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "许可"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "不是"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "服务"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "不"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "建议"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "用于"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "测试"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "监控"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "截图"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "链接"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "是"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "/api"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "agent"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "/art"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "ifacts"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "1"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "9"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "/download"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "现在"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "需要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "整理"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "这些"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "信息"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "按照"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "要求"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "给出"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "结论"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "和"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "证据"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "引用"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "相关"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "内容"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "页面"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "真实"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "标题"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "："
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "Example"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": " Domain"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "\n"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "正文"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "概要"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "："
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "该"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "域名"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "被"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "用于"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "文档"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "示例"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "无需"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "许可"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "它"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "不是"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "实际"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "服务"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "建议"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "避免"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "将"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "其"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "用于"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "测试"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "或"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "监控"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "目的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "，"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "页面"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "包含"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "多"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "语言"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "同样"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "说明"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "，并"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "提供"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "了"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "\""
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "Learn"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": " more"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "\""
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "的"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "链接"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "指向"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "https"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "://"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "iana"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": ".org"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "help"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/example"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "-dom"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "ains"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "。"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "\n"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "截图"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "可"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "通过"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "链接"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "查看"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "："
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "api"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "agent"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/art"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "ifacts"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "1"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "9"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/download"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": "/"
+                  },
+                  "index": 0
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": null,
+              "object": "chat.completion.chunk",
+              "choices": [
+                {
+                  "delta": {
+                    "role": "assistant",
+                    "content": ""
+                  },
+                  "index": 0,
+                  "finish_reason": "stop"
+                }
+              ],
+              "created": 1792548796,
+              "service_tier": "default"
+            },
+            {
+              "id": "0217925487944290451d664a5d5fd238884dd8fb7ca7e60638f28",
+              "model": "course-chat",
+              "usage": {
+                "total_tokens": 2354,
+                "prompt_tokens": 2183,
+                "completion_tokens": 171,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 90
+                }
+              },
+              "object": "chat.completion.chunk",
+              "choices": [],
+              "created": 1792548796,
+              "service_tier": "default"
+            }
+          ],
+          "content": "页面真实标题：Example Domain\n正文概要：该域名被用于文档示例，无需许可。它不是实际服务，建议避免将其用于测试或监控目的，页面包含多语言的同样说明，并提供了\"Learn more\"的链接指向https://iana.org/help/example-domains。\n截图可通过链接查看：/api/agent/artifacts/19/download/",
+          "tool_calls": []
+        },
+        "sequence": 89
+      },
+      {
+        "event_type": "message_end",
+        "payload": {
+          "citations": [],
+          "message_id": 91
+        },
+        "sequence": 90
+      }
+    ]
+  },
+  "check": {
+    "name": "05 真实浏览器",
+    "run_id": 35,
+    "status": "completed",
+    "tools": [
+      "mcp_1_browser_open"
+    ],
+    "answer": "页面真实标题：Example Domain\n正文概要：该域名被用于文档示例，无需许可。它不是实际服务，建议避免将其用于测试或监控目的，页面包含多语言的同样说明，并提供了\"Learn more\"的链接指向https://iana.org/help/example-domains。\n截图可通过链接查看：/api/agent/artifacts/19/download/",
+    "error": ""
+  }
+}
