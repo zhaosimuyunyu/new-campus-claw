@@ -44,5 +44,7 @@ async function otherAction(url:string, name?:string) {
 </template>
 
 <style scoped>
-.used-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.used-tools span{padding:4px 7px;background:#eef3ea;border-radius:4px;font-size:10px;color:#628157}.used-tools small{color:#a17c58}
+.used-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.used-tools span { padding: 4px 9px; background: var(--red-50); border: 1px solid var(--red-100); border-radius: 999px; font-size: 11px; color: var(--red-600); }
+.used-tools small { color: var(--warn); }
 </style>

@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue'
+import { onMounted, ref, computed, watch, nextTick } from 'vue'
 import AssistantStudio from './AssistantStudio.vue'
 import AgentResponse from './AgentResponse.vue'
 import HtmlPreview from './HtmlPreview.vue'
 import { renderMarkdown, type HtmlFile } from './htmlArtifacts'
-import { BookOpen, FolderOpen, ClipboardList, Users, LogOut, Plus, Download, RefreshCw, Upload, ChevronLeft, KeyRound, MessageSquare, Send, Square, Paperclip, FileText, ExternalLink, X, Code2, Eye, Wrench } from 'lucide-vue-next'
+import { BookOpen, FolderOpen, ClipboardList, Users, LogOut, Plus, Download, RefreshCw, Upload, ChevronLeft, KeyRound, MessageSquare, Send, Square, Paperclip, FileText, ExternalLink, X, Code2, Eye, Wrench, PanelLeft, Menu } from 'lucide-vue-next'
 import { api, download, openProtected, protectedObjectUrl, streamAgent, uploadAgentAttachment, type Me, type Course, type Material, type Assignment, type Submission, type Member, type FileInfo, type AgentThread, type AgentMessage, type AgentCitation, type AgentArtifact } from './api'
 import { clearTokens, hasStoredAuth, logoutAuth, restoreAuth, saveTokens, type TokenPair } from './auth'
 
 const me = ref<Me|null>(null), courses = ref<Course[]>([]), selected = ref<Course|null>(null)
+const navigationOpen = ref(window.innerWidth > 900), threadsOpen = ref(true)
 const materials = ref<Material[]>([]), assignments = ref<Assignment[]>([]), members = ref<Member[]>([])
 const currentAssignment = ref<Assignment|null>(null), submissions = ref<Submission[]>([])
 const tab = ref<'materials'|'assignments'|'members'|'agent'|'studio'>('materials'), authMode = ref<'login'|'register'|'reset'>('login')
@@ -24,6 +25,12 @@ function closePreview() { previewFile.value = null; previewExpanded.value = fals
 watch([() => activeThread.value?.id, () => selected.value?.id, tab, me], closePreview)
 const courseIcons = ref<Record<number,string>>({})
 const isTeacher = computed(() => selected.value?.role === 'teacher')
+const dueState = (a: Assignment) => new Date(a.due_at).getTime() >= Date.now() ? {text:'进行中', cls:'open'} : a.allow_late ? {text:'可迟交', cls:'late'} : {text:'已截止', cls:'closed'}
+const starters = ['帮我梳理本课程资料的重点', '根据课程资料出 5 道自测题', '帮我规划一份复习提纲']
+const messagesEl = ref<HTMLElement|null>(null)
+watch([agentMessages, agentStreaming, () => activeThread.value?.id], async () => { await nextTick(); if (messagesEl.value) messagesEl.value.scrollTop = agentMessages.value.length || agentStreaming.value ? messagesEl.value.scrollHeight : 0 }, { deep:true })
+// 中文输入法选词时按回车不应直接发送
+function onComposerEnter(event: KeyboardEvent) { if (event.isComposing || event.keyCode === 229) return; event.preventDefault(); void sendAgent() }
 const fmt = (date: string) => new Date(date).toLocaleString('zh-CN', { dateStyle: 'medium', timeStyle: 'short' })
 const size = (bytes: number) => bytes < 1024 * 1024 ? `${Math.ceil(bytes/1024)} KB` : `${(bytes/1024/1024).toFixed(1)} MB`
 async function run(task: () => Promise<void>) { busy.value = true; message.value = ''; try { await task() } catch(e) { message.value = e instanceof Error ? e.message : '操作失败' } finally { busy.value = false } }
@@ -40,9 +47,9 @@ onMounted(start)
 async function authenticate() { await run(async () => { let tokens: TokenPair; if (authMode.value === 'register') tokens = await api<TokenPair>('auth/register/', 'POST', { email:email.value, display_name:displayName.value, password:password.value, code:code.value }); else if (authMode.value === 'reset') { await api('auth/reset/', 'POST', { email:email.value, password:password.value, code:code.value }); clearTokens(); authMode.value = 'login'; message.value = '密码已重置，请登录'; return } else tokens = await api<TokenPair>('auth/login/', 'POST', { email:email.value, password:password.value }); saveTokens(tokens); await refreshUser() }) }
 async function sendCode() { await run(async () => { await api('auth/code/', 'POST', { email:email.value, purpose:authMode.value === 'reset' ? 'reset' : 'register' }); message.value = '验证码已发送，请查看邮箱' }) }
 async function signOut() { await run(async () => { try { await logoutAuth() } finally { me.value = null; selected.value = null; Object.values(courseIcons.value).forEach(URL.revokeObjectURL); courseIcons.value = {} } }) }
-async function selectCourse(course: Course) { selected.value = course; currentAssignment.value = null; tab.value = 'materials'; await loadTab() }
+async function selectCourse(course: Course) { if (window.innerWidth <= 900) navigationOpen.value = false; selected.value = course; currentAssignment.value = null; tab.value = 'materials'; await loadTab() }
 async function loadTab() { if (!selected.value) return; const id = selected.value.id; if (tab.value === 'materials') materials.value = await api<Material[]>(`courses/${id}/materials/`); if (tab.value === 'assignments') assignments.value = await api<Assignment[]>(`courses/${id}/assignments/`); if (tab.value === 'members') members.value = await api<Member[]>(`courses/${id}/members/`); if (tab.value === 'agent') await loadAgent() }
-async function switchTab(value: 'materials'|'assignments'|'members'|'agent'|'studio') { tab.value = value; currentAssignment.value = null; await run(loadTab) }
+async function switchTab(value: 'materials'|'assignments'|'members'|'agent'|'studio') { if (window.innerWidth <= 900) navigationOpen.value = false; tab.value = value; currentAssignment.value = null; await run(loadTab) }
 async function loadAgent() { if (!selected.value) return; const assistantConfig = await api<{use_knowledge:boolean}>(`courses/${selected.value.id}/assistant/`); agentUseMaterials.value = assistantConfig.use_knowledge; agentThreads.value = await api<AgentThread[]>('agent/threads/'); const courseThreads = agentThreads.value.filter(t => t.course_id === selected.value!.id); agentThreads.value = courseThreads; const current = activeThread.value ? courseThreads.find(t => t.id === activeThread.value!.id) : null; activeThread.value = current || courseThreads[0] || null; agentMessages.value = activeThread.value ? await api<AgentMessage[]>(`agent/threads/${activeThread.value.id}/messages/`) : [] }
 async function newAgentThread() { if (!selected.value) return; activeThread.value = await api<AgentThread>('agent/threads/', 'POST', { course_id: selected.value.id }); agentThreads.value.unshift(activeThread.value); agentMessages.value = [] }
 function agentFileFrom(event: Event) { const files = Array.from((event.target as HTMLInputElement).files || []); agentFiles.value.push(...files); (event.target as HTMLInputElement).value = '' }
@@ -70,35 +77,38 @@ function handleProtectedLink(event: MouseEvent) {
 </script>
 
 <template>
-  <div class="app-shell" @click.capture="handleProtectedLink">
-    <aside class="sidebar">
+  <div class="app-shell" :class="{'logged-out':!me, 'signed-in':me, 'navigation-open':me && navigationOpen, 'chat-page':me && selected && tab==='agent'}" @click.capture="handleProtectedLink" @keydown.esc="navigationOpen=false;threadsOpen=false">
+    <button v-if="me && navigationOpen" class="navigation-scrim" aria-label="关闭课程导航" @click="navigationOpen=false"></button>
+    <aside v-if="!me || navigationOpen" id="course-navigation" class="sidebar">
+      <button v-if="me" class="navigation-close" aria-label="收起课程导航" @click="navigationOpen=false"><PanelLeft :size="20"/></button>
       <div class="brand"><span class="brand-mark">C</span><span>CampusClaw</span></div>
       <template v-if="me">
         <div class="sidebar-section">我的课程 <span>{{ courses.length }}</span></div>
         <nav class="course-nav"><button v-for="c in courses" :key="c.id" :class="{active:selected?.id===c.id}" @click="selectCourse(c)"><BookOpen :size="17"/><span>{{ c.name }}</span></button></nav>
         <div class="sidebar-actions"><button @click="panel='join'"><Plus :size="17"/> 加入课程</button><button v-if="me.can_create_course" @click="panel='create'"><Plus :size="17"/> 创建课程</button><button v-else @click="panel='invite'"><KeyRound :size="17"/> 兑换教师邀请码</button></div>
-        <div class="sidebar-user"><div class="avatar">{{ me.display_name.slice(0,1) }}</div><div class="user-copy"><strong>{{ me.display_name }}</strong><small>{{ me.email }}</small></div><button title="退出登录" aria-label="退出登录" @click="signOut"><LogOut :size="18"/></button></div>
+        <template v-if="selected">
+          <nav class="sidebar-pages"><button :class="{active:tab==='agent'}" @click="switchTab('agent')"><MessageSquare :size="18"/>AI 对话</button><button :class="{active:tab==='studio'}" @click="switchTab('studio')"><Wrench :size="18"/>能力中心</button><button :class="{active:tab==='materials'}" @click="switchTab('materials')"><FolderOpen :size="18"/>课程资料</button><button :class="{active:tab==='assignments'}" @click="switchTab('assignments')"><ClipboardList :size="18"/>作业</button><button :class="{active:tab==='members'}" @click="switchTab('members')"><Users :size="18"/>成员</button></nav>
+          <div v-if="tab==='agent'" class="sidebar-history"><button class="history-heading" :aria-expanded="threadsOpen" aria-controls="conversation-navigation" @click="threadsOpen=!threadsOpen">对话记录 <ChevronLeft :size="15" :class="{'history-expanded':threadsOpen}"/></button><nav v-if="threadsOpen" id="conversation-navigation"><button v-for="thread in agentThreads" :key="thread.id" class="history-item" :class="{active:activeThread?.id===thread.id}" @click="activeThread=thread; api<AgentMessage[]>(`agent/threads/${thread.id}/messages/`).then(value=>agentMessages=value)"><MessageSquare :size="15"/><span>{{ thread.title }}</span></button><p v-if="!agentThreads.length">还没有对话</p></nav></div>
+        </template>        <div class="sidebar-user"><div class="avatar">{{ me.display_name.slice(0,1) }}</div><div class="user-copy"><strong>{{ me.display_name }}</strong><small>{{ me.email }}</small></div><button title="退出登录" aria-label="退出登录" @click="signOut"><LogOut :size="18"/></button></div>
       </template>
+      <div v-else class="sidebar-hero"><h2>课程学习，<br>从这里开始</h2><p>资料、作业与 AI 课程助手，集中在一个安静、有序的工作空间里。</p></div>
     </aside>
     <main class="main">
-      <template v-if="!me"><div class="auth-wrap"><div class="auth-heading"><h1>{{ authMode==='login'?'登录 CampusClaw':authMode==='register'?'创建账号':'重置密码' }}</h1><p>进入你的课程空间</p></div><form @submit.prevent="authenticate"><label>邮箱<input v-model="email" type="email" required autocomplete="email" placeholder="name@example.com"></label><label v-if="authMode==='register'">姓名<input v-model="displayName" required maxlength="80" placeholder="你的姓名"></label><label v-if="authMode!=='login'">验证码<div class="inline-input"><input v-model="code" required inputmode="numeric" maxlength="6" placeholder="6 位验证码"><button type="button" class="secondary" :disabled="busy || !email" @click="sendCode">发送验证码</button></div></label><label>密码<input v-model="password" type="password" required minlength="8" autocomplete="current-password" placeholder="至少 8 位"></label><button class="primary full" :disabled="busy">{{ authMode==='login'?'登录':authMode==='register'?'注册':'重置密码' }}</button></form><div class="auth-links"><button @click="authMode='login'">登录</button><button @click="authMode='register'">注册</button><button @click="authMode='reset'">忘记密码</button></div></div></template>
+      <div v-if="me" class="workspace-bar"><button class="sidebar-toggle" aria-label="切换侧边栏" title="显示或隐藏侧边栏" aria-controls="course-navigation" :aria-expanded="navigationOpen" @click="navigationOpen=!navigationOpen"><PanelLeft :size="21"/></button><span class="workspace-title">{{ tab==='agent' && selected ? (activeThread?.title || '新对话') : (selected?.name || 'CampusClaw') }}</span><div v-if="selected && tab==='agent'" class="workspace-actions"><button class="sidebar-toggle" title="技能与工具" aria-label="技能与工具" @click="switchTab('studio')"><Wrench :size="19"/></button><button class="sidebar-toggle" title="新建对话" aria-label="新建对话" @click="newAgentThread"><Plus :size="21"/></button></div></div>
+      <template v-if="!me"><div class="auth-wrap"><div class="auth-heading"><h1>{{ authMode==='login'?'登录 CampusClaw':authMode==='register'?'创建账号':'重置密码' }}</h1><p>进入你的课程空间</p></div><form @submit.prevent="authenticate"><label>邮箱<input v-model="email" type="email" required autocomplete="email" placeholder="name@example.com"></label><label v-if="authMode==='register'">姓名<input v-model="displayName" required maxlength="80" placeholder="你的姓名"></label><label v-if="authMode!=='login'">验证码<div class="inline-input"><input v-model="code" required inputmode="numeric" maxlength="6" placeholder="6 位验证码"><button type="button" class="secondary" :disabled="busy || !email" @click="sendCode">发送验证码</button></div></label><label>密码<input v-model="password" type="password" required minlength="8" autocomplete="current-password" placeholder="至少 8 位"></label><button class="primary full" :disabled="busy">{{ authMode==='login'?'登录':authMode==='register'?'注册':'重置密码' }}</button></form><div class="auth-links"><button :class="{active:authMode==='login'}" @click="authMode='login'">登录</button><button :class="{active:authMode==='register'}" @click="authMode='register'">注册</button><button :class="{active:authMode==='reset'}" @click="authMode='reset'">忘记密码</button></div></div></template>
       <template v-else-if="!selected"><header class="page-header"><div><h1>课程</h1><p>选择课程开始工作</p></div><button class="primary" @click="panel='join'"><Plus :size="17"/> 加入课程</button></header><div v-if="courses.length" class="course-grid"><button v-for="c in courses" :key="c.id" class="course-tile" @click="selectCourse(c)"><span class="course-icon"><img v-if="courseIcons[c.id]" :src="courseIcons[c.id]" alt=""><template v-else>{{ c.name.slice(0,1) }}</template></span><strong>{{ c.name }}</strong><small>{{ c.role==='teacher'?'教师':'学生' }} · {{ c.member_count }} 位成员</small></button></div><div v-else class="empty"><BookOpen :size="34"/><h2>还没有课程</h2><p>输入课程码加入，或兑换邀请码后创建课程。</p></div></template>
       <template v-else><header class="page-header course-header"><div><button class="back" @click="selected=null"><ChevronLeft :size="16"/> 所有课程</button><h1>{{ selected.name }}</h1><p>{{ isTeacher?'教师':'学生' }} · {{ selected.member_count }} 位成员</p></div><div v-if="isTeacher" class="join-code"><span>课程码</span><strong>{{ selected.join_code }}</strong><button title="重置课程码" aria-label="重置课程码" @click="resetCode"><RefreshCw :size="16"/></button></div></header>
         <div class="tabs"><button :class="{active:tab==='studio'}" @click="switchTab('studio')"><Wrench :size="17"/> 能力中心</button><button :class="{active:tab==='agent'}" @click="switchTab('agent')"><MessageSquare :size="17"/> Agent</button><button :class="{active:tab==='materials'}" @click="switchTab('materials')"><FolderOpen :size="17"/> 课程资料</button><button :class="{active:tab==='assignments'}" @click="switchTab('assignments')"><ClipboardList :size="17"/> 作业</button><button :class="{active:tab==='members'}" @click="switchTab('members')"><Users :size="17"/> 成员</button></div>
         <AssistantStudio v-if="tab==='studio'" :key="selected.id" :course-id="selected.id" :thread-id="activeThread?.course_id===selected.id?activeThread.id:null" @saved="loadAgent" @chat="(starter:string)=>{agentDraft=starter;switchTab('agent')}"/>
-        <section v-if="tab==='agent'" class="agent-workspace" :class="{'has-preview':previewFile, 'preview-expanded':previewExpanded}">
-          <aside class="agent-threads">
-            <div class="section-head"><h2>对话</h2><button class="secondary" title="新建对话" @click="newAgentThread"><Plus :size="16"/> 新建</button></div>
-            <button v-for="thread in agentThreads" :key="thread.id" class="agent-thread" :class="{active:activeThread?.id===thread.id}" @click="activeThread=thread; api<AgentMessage[]>(`agent/threads/${thread.id}/messages/`).then(value=>agentMessages=value)"><MessageSquare :size="15"/><span>{{ thread.title }}</span></button>
-            <div v-if="!agentThreads.length" class="agent-empty">还没有对话</div>
-          </aside>
+        <section v-if="tab==='agent'" class="agent-workspace" :class="{'has-preview':previewFile, 'preview-expanded':previewExpanded, 'threads-open':threadsOpen}">
           <div class="agent-chat">
             <div v-if="!activeThread" class="empty"><MessageSquare :size="34"/><h2>开始课程 Agent 对话</h2><button class="primary" @click="newAgentThread">新建对话</button></div>
             <template v-else>
-              <div class="agent-chat-head"><div><h2>{{ activeThread.title }}</h2></div><div class="agent-actions"><button class="secondary" @click="switchTab('studio')"><Wrench :size="16"/>技能与工具</button><button class="secondary" @click="createAgentArtifact('pdf')"><FileText :size="16"/> PDF</button><button class="secondary" @click="createAgentArtifact('docx')"><FileText :size="16"/> Word</button></div></div>
-              <div class="agent-messages">
+              <div class="agent-chat-head"><div><h2>{{ activeThread.title }}</h2><p>{{ selected.name }} · 课程助手</p></div><div class="agent-actions"><button class="secondary" @click="switchTab('studio')"><Wrench :size="16"/>技能与工具</button><button class="secondary" @click="createAgentArtifact('pdf')"><FileText :size="16"/> PDF</button><button class="secondary" @click="createAgentArtifact('docx')"><FileText :size="16"/> Word</button></div></div>
+              <div ref="messagesEl" class="agent-messages">
+                <div v-if="!agentMessages.length && !agentStreaming" class="agent-welcome"><div class="agent-role">AI</div><h2>有什么可以帮你？</h2><p>可以基于课程资料提问，也可以让我生成文档。</p><div class="starter-chips"><button v-for="text in starters" :key="text" @click="agentDraft=text">{{ text }}</button></div></div>
                 <article v-for="item in agentMessages.filter(item=>item.role!=='tool')" :key="item.id" class="agent-message" :class="item.role">
-                  <div class="agent-role">{{ item.role==='user'?'你':item.role==='assistant'?'Agent':'工具' }}</div>
+                  <div class="agent-role">{{ item.role==='user'?'你':item.role==='assistant'?'AI':'工具' }}</div>
                   <div class="agent-content">
                     <AgentResponse v-if="item.role==='assistant'" :message="item" @open="previewFile=$event"/>
                     <div v-else-if="item.role==='tool'" class="tool-result"><Wrench :size="14"/> {{ item.metadata.name }} 已完成</div>
@@ -108,20 +118,62 @@ function handleProtectedLink(event: MouseEvent) {
                     <div v-if="item.citations?.length" class="citations"><div v-for="(citation,index) in item.citations" :key="citation.chunk_id" class="citation"><strong>[{{ index+1 }}] {{ citation.title }} · 第 {{ citation.chunk_index + 1 }} 片</strong><span>{{ citation.excerpt.slice(0, 180) }}{{ citation.excerpt.length > 180 ? '…' : '' }}</span><div class="citation-actions"><button @click="openCitation(citation)"><Eye :size="13"/> 预览资料</button><button @click="downloadCitation(citation)"><Download :size="13"/> 下载原文件</button></div></div></div>
                   </div>
                 </article>
-                <article v-if="agentStreaming" class="agent-message assistant"><div class="agent-role">Agent</div><div class="agent-content streaming markdown-body" v-html="renderMarkdown(agentStreaming)"></div></article>
+                <article v-if="agentStreaming" class="agent-message assistant"><div class="agent-role">AI</div><div class="agent-content streaming markdown-body" v-html="renderMarkdown(agentStreaming)"></div></article>
               </div>
               <div class="agent-composer">
-                <div class="agent-options"><label class="check"><input v-model="agentUseMaterials" type="checkbox"> 参考课程资料</label><label class="attach-button" title="添加附件"><Paperclip :size="16"/><input type="file" multiple accept=".txt,.md,.pdf,.docx,image/*" @change="agentFileFrom">添加附件</label><button v-if="agentBusy" class="secondary" @click="stopAgent"><Square :size="15"/> 停止</button></div>
-                <div v-if="agentFiles.length" class="pending-files"><span v-for="(file,index) in agentFiles" :key="`${file.name}-${index}`"><Paperclip :size="13"/> {{ file.name }} <small>{{ size(file.size) }}</small><button title="移除附件" :aria-label="`移除 ${file.name}`" @click="removeAgentFile(index)"><X :size="13"/></button></span></div>
-                <textarea v-model="agentDraft" rows="3" placeholder="输入问题，或让 Agent 生成一份课程文档" @keydown.enter.exact.prevent="sendAgent"></textarea><button class="primary send-button" :disabled="agentBusy || !agentDraft.trim()" @click="sendAgent"><Send :size="16"/> {{ agentBusy ? '生成中…' : '发送' }}</button>
+                <div class="composer-box">
+                  <div v-if="agentFiles.length" class="pending-files"><span v-for="(file,index) in agentFiles" :key="`${file.name}-${index}`"><Paperclip :size="13"/> {{ file.name }} <small>{{ size(file.size) }}</small><button title="移除附件" :aria-label="`移除 ${file.name}`" @click="removeAgentFile(index)"><X :size="13"/></button></span></div>
+                  <textarea v-model="agentDraft" rows="1" placeholder="输入消息…" @keydown.enter.exact="onComposerEnter"></textarea>
+                  <div class="composer-bar">
+                    <div class="agent-options"><label class="check"><input v-model="agentUseMaterials" type="checkbox"> 参考课程资料</label><label class="attach-button" title="添加附件"><Paperclip :size="16"/><input type="file" multiple accept=".txt,.md,.pdf,.docx,image/*" @change="agentFileFrom">添加附件</label></div>
+                    <div class="composer-actions"><button v-if="agentBusy" class="secondary" @click="stopAgent"><Square :size="15"/> 停止</button><button class="primary send-button" :disabled="agentBusy || !agentDraft.trim()" @click="sendAgent"><Send :size="16"/> {{ agentBusy ? '生成中…' : '发送' }}</button></div>
+                  </div>
+                </div>
+                <p class="composer-hint">Enter 发送 · Shift + Enter 换行</p>
               </div>
             </template>
           </div>
           <HtmlPreview v-if="previewFile" :file="previewFile" @close="closePreview" @expand="previewExpanded=$event"/>
         </section>
-        <section v-if="tab==='materials'"><div class="section-head"><div><h2>课程资料</h2><p>课程成员可以下载这些文件</p></div><button v-if="isTeacher" class="primary" @click="panel='material'"><Upload :size="17"/> 上传资料</button></div><div v-if="materials.length" class="list"><div v-for="m in materials" :key="m.id" class="list-row"><div class="file-icon"><FolderOpen :size="19"/></div><div class="row-copy"><strong>{{ m.title }}</strong><small>{{ m.attachment.name }} · {{ size(m.attachment.size) }} · {{ fmt(m.created_at) }}</small><small :class="m.index_status==='ready'?'index-ready':'index-failed'">{{ m.index_status==='ready'?'已建立知识索引':m.index_status==='failed'?'未建立索引：'+(m.index_error || '请重试'):'正在建立索引' }}</small></div><button class="icon-button" title="下载" aria-label="下载" @click="getFile(m.attachment)"><Download :size="18"/></button></div></div><div v-else class="empty"><FolderOpen :size="32"/><h2>暂无课程资料</h2></div></section>
-        <section v-if="tab==='assignments'"><div class="section-head"><div><h2>作业</h2><p>查看要求与提交记录</p></div><button v-if="isTeacher" class="primary" @click="panel='assignment'"><Plus :size="17"/> 发布作业</button></div><template v-if="currentAssignment"><button class="back" @click="currentAssignment=null"><ChevronLeft :size="16"/> 返回作业列表</button><div class="assignment-detail"><h2>{{ currentAssignment.title }}</h2><p class="meta">截止 {{ fmt(currentAssignment.due_at) }} · {{ currentAssignment.allow_late?'允许迟交':'截止后不可提交' }} · 最多 {{ currentAssignment.max_file_size_mb }} MB</p><p class="description">{{ currentAssignment.description || '暂无说明' }}</p><button v-if="currentAssignment.attachment" class="file-link" @click="getFile(currentAssignment.attachment)"><Download :size="16"/> {{ currentAssignment.attachment.name }}</button><div v-if="!isTeacher" class="submission-area"><h3>提交作业</h3><div class="upload-line"><input type="file" @change="fileFrom($event,'submission')"><button class="primary" :disabled="busy" @click="submit"><Upload :size="16"/> 提交文件</button></div><p class="hint">支持 {{ currentAssignment.allowed_extensions.length?currentAssignment.allowed_extensions.join('、'):'doc、docx、pdf、zip 等常见格式' }}</p><h3>提交记录</h3><div v-for="v in currentAssignment.my_versions || []" :key="v.number" class="list-row"><div class="row-copy"><strong>第 {{ v.number }} 版 · {{ v.attachment.name }}</strong><small>{{ fmt(v.submitted_at) }} {{ v.is_late?'· 迟交':'' }}</small></div><button class="icon-button" title="下载" @click="getFile(v.attachment)"><Download :size="18"/></button></div><p v-if="!currentAssignment.my_versions?.length" class="muted">尚未提交</p></div><div v-else class="submission-area"><h3>学生提交</h3><div v-for="s in submissions" :key="s.student.id" class="student-row"><strong>{{ s.student.name }}</strong><small>{{ s.student.email }}</small><div v-for="v in s.versions" :key="v.number" class="version"><span>第 {{ v.number }} 版 · {{ fmt(v.submitted_at) }} {{ v.is_late?'· 迟交':'' }}</span><button @click="getFile(v.attachment)"><Download :size="16"/> {{ v.attachment.name }}</button></div></div><p v-if="!submissions.length" class="muted">暂无提交</p></div></div></template><div v-else-if="assignments.length" class="list"><button v-for="a in assignments" :key="a.id" class="list-row assignment-row" @click="openAssignment(a)"><div class="file-icon"><ClipboardList :size="19"/></div><div class="row-copy"><strong>{{ a.title }}</strong><small>截止 {{ fmt(a.due_at) }} · {{ a.allow_late?'允许迟交':'截止后关闭' }}</small></div><span class="row-arrow">›</span></button></div><div v-else class="empty"><ClipboardList :size="32"/><h2>暂无作业</h2></div></section>
-        <section v-if="tab==='members'"><div class="section-head"><div><h2>课程成员</h2><p>{{ members.length }} 位成员</p></div></div><div class="list"><div v-for="m in members" :key="m.id" class="list-row"><div class="avatar small">{{ m.name.slice(0,1) }}</div><div class="row-copy"><strong>{{ m.name }}</strong><small>{{ m.email }}</small></div><span class="role">{{ m.role==='teacher'?'教师':'学生' }}</span></div></div></section>
+        <section v-if="tab==='materials'"><div class="section-head"><div><h2>课程资料</h2><p>课程成员可以下载这些文件</p></div><button v-if="isTeacher" class="primary" @click="panel='material'"><Upload :size="17"/> 上传资料</button></div><div v-if="materials.length" class="list"><div v-for="m in materials" :key="m.id" class="list-row"><div class="file-icon"><FolderOpen :size="19"/></div><div class="row-copy"><strong>{{ m.title }}</strong><small>{{ m.attachment.name }} · {{ size(m.attachment.size) }} · {{ fmt(m.created_at) }}</small><small :class="m.index_status==='ready'?'index-ready':m.index_status==='failed'?'index-failed':'index-pending'">{{ m.index_status==='ready'?'已建立知识索引':m.index_status==='failed'?'未建立索引：'+(m.index_error || '请重试'):'正在建立索引' }}</small></div><button class="icon-button" title="下载" aria-label="下载" @click="getFile(m.attachment)"><Download :size="18"/></button></div></div><div v-else class="empty"><FolderOpen :size="32"/><h2>暂无课程资料</h2></div></section>
+        <section v-if="tab==='assignments'">
+          <div class="section-head"><div><h2>作业</h2><p>查看要求与提交记录</p></div><button v-if="isTeacher" class="primary" @click="panel='assignment'"><Plus :size="17"/> 发布作业</button></div>
+          <template v-if="currentAssignment">
+            <button class="back" @click="currentAssignment=null"><ChevronLeft :size="16"/> 返回作业列表</button>
+            <div class="assignment-detail">
+              <div class="assignment-hero">
+                <h2>{{ currentAssignment.title }}</h2>
+                <div class="chips"><span class="chip" :class="dueState(currentAssignment).cls">{{ dueState(currentAssignment).text }}</span><span class="chip">截止 {{ fmt(currentAssignment.due_at) }}</span><span class="chip">{{ currentAssignment.allow_late?'允许迟交':'截止后不可提交' }}</span><span class="chip">单文件 ≤ {{ currentAssignment.max_file_size_mb }} MB</span></div>
+              </div>
+              <div class="assignment-grid">
+                <div class="pane">
+                  <h3>作业说明</h3>
+                  <p class="description">{{ currentAssignment.description || '暂无说明' }}</p>
+                  <button v-if="currentAssignment.attachment" class="file-link" @click="getFile(currentAssignment.attachment)"><Download :size="16"/> {{ currentAssignment.attachment.name }}</button>
+                </div>
+                <div v-if="!isTeacher" class="pane submission-area">
+                  <h3>提交作业</h3>
+                  <div class="upload-line"><input :key="currentAssignment.my_versions?.length || 0" type="file" @change="fileFrom($event,'submission')"><button class="primary" :disabled="busy" @click="submit"><Upload :size="16"/> 提交文件</button></div>
+                  <p class="hint">支持 {{ currentAssignment.allowed_extensions.length?currentAssignment.allowed_extensions.join('、'):'doc、docx、pdf、zip 等常见格式' }}</p>
+                  <h3 class="sub">提交记录</h3>
+                  <div v-for="v in currentAssignment.my_versions || []" :key="v.number" class="version-item"><div class="row-copy"><strong>第 {{ v.number }} 版 · {{ v.attachment.name }}</strong><small>{{ fmt(v.submitted_at) }}<span v-if="v.is_late" class="late-tag">迟交</span></small></div><button class="icon-button" title="下载" aria-label="下载" @click="getFile(v.attachment)"><Download :size="18"/></button></div>
+                  <p v-if="!currentAssignment.my_versions?.length" class="muted">尚未提交</p>
+                </div>
+                <div v-else class="pane submission-area">
+                  <h3>学生提交 <span class="count">{{ submissions.length }}</span></h3>
+                  <div v-for="s in submissions" :key="s.student.id" class="student-row">
+                    <div class="student-id"><strong>{{ s.student.name }}</strong><small>{{ s.student.email }}</small></div>
+                    <div class="student-versions"><div v-for="v in s.versions" :key="v.number" class="version"><span>第 {{ v.number }} 版 · {{ fmt(v.submitted_at) }}<span v-if="v.is_late" class="late-tag">迟交</span></span><button @click="getFile(v.attachment)"><Download :size="16"/> {{ v.attachment.name }}</button></div></div>
+                  </div>
+                  <p v-if="!submissions.length" class="muted">暂无提交</p>
+                </div>
+              </div>
+            </div>
+          </template>
+          <div v-else-if="assignments.length" class="list"><button v-for="a in assignments" :key="a.id" class="list-row assignment-row" @click="openAssignment(a)"><div class="file-icon"><ClipboardList :size="19"/></div><div class="row-copy"><strong>{{ a.title }}</strong><small>截止 {{ fmt(a.due_at) }} · {{ a.allow_late?'允许迟交':'截止后关闭' }}</small></div><span class="due-badge" :class="dueState(a).cls">{{ dueState(a).text }}</span><span class="row-arrow">›</span></button></div>
+          <div v-else class="empty"><ClipboardList :size="32"/><h2>暂无作业</h2></div>
+        </section>
+        <section v-if="tab==='members'"><div class="section-head"><div><h2>课程成员</h2><p>{{ members.length }} 位成员</p></div></div><div class="list"><div v-for="m in members" :key="m.id" class="list-row"><div class="avatar small">{{ m.name.slice(0,1) }}</div><div class="row-copy"><strong>{{ m.name }}</strong><small>{{ m.email }}</small></div><span class="role" :class="m.role">{{ m.role==='teacher'?'教师':'学生' }}</span></div></div></section>
       </template>
       <div v-if="message" class="notice" role="status">{{ message }}<button aria-label="关闭提示" @click="message=''">×</button></div>
     </main>

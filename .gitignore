@@ -10,3 +10,6 @@ HANDOFF.md
 
 # Office temporary lock files
 ~$*
+
+# Local document rendering and verification scratch files
+tmp/
